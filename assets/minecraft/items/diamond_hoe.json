@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "item/diamond_hoe"
+    },
+    "cases": [
+      {
+        "when": "strike_hoe",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/strike_hoe"
+        }
+      }
+    ]
+  }
+}
