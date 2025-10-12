@@ -102,6 +102,7 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Add custom model data from issue #${{ github.event.issue.number }}"
           title: "Add custom model: ${{ steps.parse.outputs.custom_model_data || env.IMAGE_FILE }}"
           body: |
@@ -116,6 +117,8 @@ jobs:
             This PR was automatically generated from the issue.
           branch: custom-model/issue-${{ github.event.issue.number }}
           delete-branch: true
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
 
       - name: Comment on issue
         if: steps.create_pr.outputs.pull-request-number
