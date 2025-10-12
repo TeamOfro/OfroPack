@@ -1,0 +1,152 @@
+name: Add Custom Model from Issue
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  parse-and-add:
+    if: contains(github.event.issue.labels.*.name, 'custom-model')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse issue body
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+
+            // Parse materials (required)
+            const materialsMatch = issueBody.match(/Materials?:\s*(.+)/i);
+            if (!materialsMatch) {
+              core.setFailed('Materials field not found in issue');
+              return;
+            }
+            const materials = materialsMatch[1].trim();
+
+            // Parse custom model data (optional)
+            const cmdMatch = issueBody.match(/Custom Model Data:\s*(.+)/i);
+            const customModelData = cmdMatch ? cmdMatch[1].trim() : '';
+
+            // Parse image URL (required)
+            const imageMatch = issueBody.match(/Image URL:\s*(.+)/i);
+            if (!imageMatch) {
+              core.setFailed('Image URL field not found in issue');
+              return;
+            }
+            const imageUrl = imageMatch[1].trim();
+
+            core.setOutput('materials', materials);
+            core.setOutput('custom_model_data', customModelData);
+            core.setOutput('image_url', imageUrl);
+
+            // Add reaction to show processing started
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: 'rocket'
+            });
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Download image
+        run: |
+          IMAGE_URL="${{ steps.parse.outputs.image_url }}"
+          IMAGE_NAME=$(basename "$IMAGE_URL")
+          curl -L -o "$IMAGE_NAME" "$IMAGE_URL"
+          echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Build tool
+        run: cargo build --release
+
+      - name: Run processor
+        run: |
+          MATERIALS="${{ steps.parse.outputs.materials }}"
+          CUSTOM_MODEL_DATA="${{ steps.parse.outputs.custom_model_data }}"
+
+          # Split materials by comma and build arguments
+          ARGS=""
+          IFS=',' read -ra MATERIAL_ARRAY <<< "$MATERIALS"
+          for material in "${MATERIAL_ARRAY[@]}"; do
+            material=$(echo "$material" | xargs)  # trim whitespace
+            ARGS="$ARGS -m $material"
+          done
+
+          # Add custom model data if provided
+          if [ -n "$CUSTOM_MODEL_DATA" ]; then
+            ARGS="$ARGS -c $CUSTOM_MODEL_DATA"
+          fi
+
+          # Run the processor
+          ./target/release/processer $ARGS "$IMAGE_FILE"
+
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Add custom model data from issue #${{ github.event.issue.number }}"
+          title: "Add custom model: ${{ steps.parse.outputs.custom_model_data || env.IMAGE_FILE }}"
+          body: |
+            ## Custom Model Data Addition
+
+            Resolves #${{ github.event.issue.number }}
+
+            - **Materials**: ${{ steps.parse.outputs.materials }}
+            - **Custom Model Data**: ${{ steps.parse.outputs.custom_model_data || 'Auto-generated from filename' }}
+            - **Image**: ${{ steps.parse.outputs.image_url }}
+
+            This PR was automatically generated from the issue.
+          branch: custom-model/issue-${{ github.event.issue.number }}
+          delete-branch: true
+
+      - name: Comment on issue
+        if: steps.create_pr.outputs.pull-request-number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ Custom model data has been processed!\n\nPull Request: #${{ steps.create_pr.outputs.pull-request-number }}\n\nPlease review and merge the PR to add the custom model data.`
+            });
+
+            // Add success reaction
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: '+1'
+            });
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ Failed to process custom model data. Please check the workflow logs for details.`
+            });
+
+            // Add failure reaction
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: '-1'
+            });

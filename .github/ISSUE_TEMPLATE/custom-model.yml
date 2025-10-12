@@ -1,0 +1,45 @@
+name: custom-model
+description: Request to add a custom model data
+title: "[Custom Model] "
+labels: ["custom-model"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Request Custom Model Data
+        Fill in the details below to automatically add custom model data to the resource pack.
+  
+  - type: input
+    id: materials
+    attributes:
+      label: Materials
+      description: "Comma-separated list of materials (e.g., diamond_axe,iron_sword,golden_hoe)"
+      placeholder: "diamond_axe,iron_sword"
+    validations:
+      required: true
+  
+  - type: input
+    id: custom_model_data
+    attributes:
+      label: Custom Model Data
+      description: "Name for the custom model data (optional, defaults to image filename without extension)"
+      placeholder: "my_custom_model"
+    validations:
+      required: false
+  
+  - type: input
+    id: image_url
+    attributes:
+      label: Image URL
+      description: "Direct URL to the PNG image file"
+      placeholder: "https://example.com/my_texture.png"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: "Any additional information about this custom model"
+    validations:
+      required: false
