@@ -44,13 +44,22 @@ jobs:
               return;
             }
 
-            // Parse image URL (required)
-            const imageMatch = issueBody.match(/###\s*Image URL\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
+            // Parse image URL (required) - supports both plain URLs and img tags
+            const imageMatch = issueBody.match(/###\s*Image\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
             if (!imageMatch) {
-              core.setFailed('Image URL field not found in issue');
+              core.setFailed('Image field not found in issue');
               return;
             }
-            const imageUrl = imageMatch[1].trim();
+            let imageContent = imageMatch[1].trim();
+
+            // Extract URL from img tag if present
+            const imgTagMatch = imageContent.match(/<img[^>]+src="([^"]+)"/i);
+            const imageUrl = imgTagMatch ? imgTagMatch[1] : imageContent;
+
+            if (!imageUrl || imageUrl === '_No response_') {
+              core.setFailed('Image URL is required');
+              return;
+            }
 
             core.setOutput('materials', materials);
             core.setOutput('custom_model_data', customModelData);
@@ -73,17 +82,24 @@ jobs:
         run: |
           IMAGE_URL="${{ steps.parse.outputs.image_url }}"
           IMAGE_NAME="${{ steps.parse.outputs.custom_model_data }}.png"
-          
-          # Download with curl
-          HTTP_CODE=$(curl -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
-          
+
+          # Check if URL is from GitHub user-attachments (private assets)
+          if [[ "$IMAGE_URL" == *"https://github.com/user-attachments/assets/"* ]]; then
+            echo "Detected GitHub private asset, using authentication..."
+            HTTP_CODE=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                             -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
+          else
+            echo "Public URL detected, downloading without authentication..."
+            HTTP_CODE=$(curl -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
+          fi
+
           # Check if download was successful
           if [ "$HTTP_CODE" -ne 200 ]; then
             echo "Error: Failed to download image. HTTP status: $HTTP_CODE"
             rm -f "$IMAGE_NAME"
             exit 1
           fi
-          
+
           # Verify it's actually a PNG file
           if ! file "$IMAGE_NAME" | grep -q "PNG image"; then
             echo "Error: Downloaded file is not a valid PNG image"
@@ -92,7 +108,8 @@ jobs:
             rm -f "$IMAGE_NAME"
             exit 1
           fi
-          
+
+          echo "Successfully downloaded and validated PNG image"
           echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Build tool
@@ -111,13 +128,8 @@ jobs:
             ARGS="$ARGS -m $material"
           done
 
-          # Add custom model data if provided
-          if [ -n "$CUSTOM_MODEL_DATA" ]; then
-            ARGS="$ARGS -c $CUSTOM_MODEL_DATA"
-          fi
-
           # Run the processor
-          ./target/release/processer $ARGS "$IMAGE_FILE"
+          ./target/release/processer $ARGS -c "$CUSTOM_MODEL_DATA" "$IMAGE_FILE"
 
       - name: Create Pull Request
         id: create_pr

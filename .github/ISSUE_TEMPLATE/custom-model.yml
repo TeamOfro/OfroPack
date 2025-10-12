@@ -8,7 +8,7 @@ body:
       value: |
         ## Request Custom Model Data
         Fill in the details below to automatically add custom model data to the resource pack.
-  
+
   - type: input
     id: materials
     attributes:
@@ -17,7 +17,7 @@ body:
       placeholder: "diamond_axe,iron_sword"
     validations:
       required: true
-  
+
   - type: input
     id: custom_model_data
     attributes:
@@ -26,16 +26,16 @@ body:
       placeholder: "my_custom_model"
     validations:
       required: true
-  
-  - type: input
+
+  - type: textarea
     id: image_url
     attributes:
-      label: Image URL
-      description: "Direct URL to the PNG image file"
-      placeholder: "https://example.com/my_texture.png"
+      label: Image
+      description: "Paste the PNG image here or provide a direct URL"
+      placeholder: "Drag and drop an image or paste URL"
     validations:
       required: true
-  
+
   - type: textarea
     id: notes
     attributes:
