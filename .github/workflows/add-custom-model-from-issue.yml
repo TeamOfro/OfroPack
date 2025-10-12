@@ -24,8 +24,8 @@ jobs:
           script: |
             const issueBody = context.payload.issue.body;
 
-            // Parse materials (required)
-            const materialsMatch = issueBody.match(/Materials?:\s*(.+)/i);
+            // Parse materials (required) - matches "### Materials\n\nvalue"
+            const materialsMatch = issueBody.match(/###\s*Materials\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
             if (!materialsMatch) {
               core.setFailed('Materials field not found in issue');
               return;
@@ -33,11 +33,17 @@ jobs:
             const materials = materialsMatch[1].trim();
 
             // Parse custom model data (optional)
-            const cmdMatch = issueBody.match(/Custom Model Data:\s*(.+)/i);
-            const customModelData = cmdMatch ? cmdMatch[1].trim() : '';
+            const cmdMatch = issueBody.match(/###\s*Custom Model Data\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
+            let customModelData = '';
+            if (cmdMatch) {
+              const value = cmdMatch[1].trim();
+              if (value !== '_No response_') {
+                customModelData = value;
+              }
+            }
 
             // Parse image URL (required)
-            const imageMatch = issueBody.match(/Image URL:\s*(.+)/i);
+            const imageMatch = issueBody.match(/###\s*Image URL\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
             if (!imageMatch) {
               core.setFailed('Image URL field not found in issue');
               return;
@@ -64,7 +70,7 @@ jobs:
       - name: Download image
         run: |
           IMAGE_URL="${{ steps.parse.outputs.image_url }}"
-          IMAGE_NAME=$(basename "$IMAGE_URL")
+          IMAGE_NAME=$(basename "$IMAGE_URL" | cut -d'?' -f1)
           curl -L -o "$IMAGE_NAME" "$IMAGE_URL"
           echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
 
