@@ -87,6 +87,7 @@ jobs:
           if [[ "$IMAGE_URL" == *"https://github.com/user-attachments/assets/"* ]]; then
             echo "Detected GitHub private asset, using authentication..."
             HTTP_CODE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                             -H "Accept: application/vnd.github.v3+json" \
                              -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
           else
             echo "Public URL detected, downloading without authentication..."
