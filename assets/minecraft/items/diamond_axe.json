@@ -13,6 +13,13 @@
           "type": "minecraft:model",
           "model": "item/bone_of_kenkoukotsu"
         }
+      },
+      {
+        "when": "sennsyuuraku",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/sennsyuuraku"
+        }
       }
     ]
   }
