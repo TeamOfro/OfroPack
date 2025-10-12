@@ -4,14 +4,14 @@
     "property": "minecraft:custom_model_data",
     "fallback": {
       "type": "minecraft:model",
-      "model": "minecraft:item/diamond_hoe"
+      "model": "minecraft:item/diamond_axe"
     },
     "cases": [
       {
-        "when": "strike_hoe",
+        "when": "bone_of_kenkoukotsu",
         "model": {
           "type": "minecraft:model",
-          "model": "item/strike_hoe"
+          "model": "item/bone_of_kenkoukotsu"
         }
       }
     ]
