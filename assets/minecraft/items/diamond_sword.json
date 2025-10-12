@@ -11,7 +11,7 @@
         "when": "spiders_claire",
         "model": {
           "type": "minecraft:model",
-          "model": "item/diamond_sword/spiders_claire"
+          "model": "item/spiders_claire"
         }
       }
     ]
