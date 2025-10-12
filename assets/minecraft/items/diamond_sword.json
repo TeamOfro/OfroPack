@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/diamond_sword"
+    },
+    "cases": [
+      {
+        "when": "spiders_claire",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/diamond_sword/spiders_claire"
+        }
+      }
+    ]
+  }
+}

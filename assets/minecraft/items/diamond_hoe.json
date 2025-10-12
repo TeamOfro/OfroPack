@@ -13,6 +13,13 @@
           "type": "minecraft:model",
           "model": "item/diamond_hoe/strike_hoe"
         }
+      },
+      {
+        "when": "phantom_hunter",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/diamond_hoe/phantom_hunter"
+        }
       }
     ]
   }
