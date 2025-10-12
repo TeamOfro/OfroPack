@@ -11,14 +11,14 @@
         "when": "strike_hoe",
         "model": {
           "type": "minecraft:model",
-          "model": "item/diamond_hoe/strike_hoe"
+          "model": "item/strike_hoe"
         }
       },
       {
         "when": "phantom_hunter",
         "model": {
           "type": "minecraft:model",
-          "model": "item/diamond_hoe/phantom_hunter"
+          "model": "item/phantom_hunter"
         }
       }
     ]
