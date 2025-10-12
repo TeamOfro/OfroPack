@@ -13,6 +13,13 @@
           "type": "minecraft:model",
           "model": "item/spiders_claire"
         }
+      },
+      {
+        "when": "cutlas_king",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/cutlas_king"
+        }
       }
     ]
   }
