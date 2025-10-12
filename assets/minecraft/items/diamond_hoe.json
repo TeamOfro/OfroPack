@@ -11,7 +11,7 @@
         "when": "strike_hoe",
         "model": {
           "type": "minecraft:model",
-          "model": "item/strike_hoe"
+          "model": "item/diamond_hoe/strike_hoe"
         }
       }
     ]

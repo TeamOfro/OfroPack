@@ -11,7 +11,7 @@
         "when": "bone_of_kenkoukotsu",
         "model": {
           "type": "minecraft:model",
-          "model": "item/bone_of_kenkoukotsu"
+          "model": "item/diamond_axe/bone_of_kenkoukotsu"
         }
       }
     ]
