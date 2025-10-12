@@ -32,14 +32,16 @@ jobs:
             }
             const materials = materialsMatch[1].trim();
 
-            // Parse custom model data (optional)
+            // Parse custom model data (required)
             const cmdMatch = issueBody.match(/###\s*Custom Model Data\s*\n\s*(.+?)(?:\n\n###|\n\s*\n|$)/is);
-            let customModelData = '';
-            if (cmdMatch) {
-              const value = cmdMatch[1].trim();
-              if (value !== '_No response_') {
-                customModelData = value;
-              }
+            if (!cmdMatch) {
+              core.setFailed('Custom Model Data field not found in issue');
+              return;
+            }
+            const customModelData = cmdMatch[1].trim();
+            if (customModelData === '_No response_' || customModelData === '') {
+              core.setFailed('Custom Model Data is required');
+              return;
             }
 
             // Parse image URL (required)
@@ -70,8 +72,27 @@ jobs:
       - name: Download image
         run: |
           IMAGE_URL="${{ steps.parse.outputs.image_url }}"
-          IMAGE_NAME=$(basename "$IMAGE_URL" | cut -d'?' -f1)
-          curl -L -o "$IMAGE_NAME" "$IMAGE_URL"
+          IMAGE_NAME="${{ steps.parse.outputs.custom_model_data }}.png"
+          
+          # Download with curl
+          HTTP_CODE=$(curl -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
+          
+          # Check if download was successful
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Error: Failed to download image. HTTP status: $HTTP_CODE"
+            rm -f "$IMAGE_NAME"
+            exit 1
+          fi
+          
+          # Verify it's actually a PNG file
+          if ! file "$IMAGE_NAME" | grep -q "PNG image"; then
+            echo "Error: Downloaded file is not a valid PNG image"
+            echo "Content preview:"
+            cat "$IMAGE_NAME" | head -5
+            rm -f "$IMAGE_NAME"
+            exit 1
+          fi
+          
           echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Build tool
@@ -104,14 +125,14 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Add custom model data from issue #${{ github.event.issue.number }}"
-          title: "Add custom model: ${{ steps.parse.outputs.custom_model_data || env.IMAGE_FILE }}"
+          title: "Add custom model: ${{ steps.parse.outputs.custom_model_data }}"
           body: |
             ## Custom Model Data Addition
 
             Resolves #${{ github.event.issue.number }}
 
             - **Materials**: ${{ steps.parse.outputs.materials }}
-            - **Custom Model Data**: ${{ steps.parse.outputs.custom_model_data || 'Auto-generated from filename' }}
+            - **Custom Model Data**: ${{ steps.parse.outputs.custom_model_data }}
             - **Image**: ${{ steps.parse.outputs.image_url }}
 
             This PR was automatically generated from the issue.

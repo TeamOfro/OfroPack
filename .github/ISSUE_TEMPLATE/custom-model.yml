@@ -22,10 +22,10 @@ body:
     id: custom_model_data
     attributes:
       label: Custom Model Data
-      description: "Name for the custom model data (optional, defaults to image filename without extension)"
+      description: "Name for the custom model data (lowercase, numbers, underscores only)"
       placeholder: "my_custom_model"
     validations:
-      required: false
+      required: true
   
   - type: input
     id: image_url
