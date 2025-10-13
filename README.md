@@ -31,7 +31,8 @@ Issueを作成するだけで自動的にリソースパックに追加されま
    - **Image URL**: 画像の公開URL
 3. Issueを作成
 
-数分後、自動的にPull Requestが作成され、マージ後にGitHub Pagesに反映されます。
+数分後、自動的にPull Requestが作成され、IssueとPRの両方に**画像プレビュー（256x256）**が表示されます。
+マージ後にGitHub Pagesに反映されます。
 
 詳細は[GITHUB_ACTIONS.md](GITHUB_ACTIONS.md)を参照。
 

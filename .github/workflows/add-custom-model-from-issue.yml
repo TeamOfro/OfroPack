@@ -73,17 +73,17 @@ jobs:
         run: |
           IMAGE_URL="${{ steps.parse.outputs.image_url }}"
           IMAGE_NAME="${{ steps.parse.outputs.custom_model_data }}.png"
-          
+
           # Download with curl
           HTTP_CODE=$(curl -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
-          
+
           # Check if download was successful
           if [ "$HTTP_CODE" -ne 200 ]; then
             echo "Error: Failed to download image. HTTP status: $HTTP_CODE"
             rm -f "$IMAGE_NAME"
             exit 1
           fi
-          
+
           # Verify it's actually a PNG file
           if ! file "$IMAGE_NAME" | grep -q "PNG image"; then
             echo "Error: Downloaded file is not a valid PNG image"
@@ -92,7 +92,7 @@ jobs:
             rm -f "$IMAGE_NAME"
             exit 1
           fi
-          
+
           echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Build tool
@@ -133,7 +133,13 @@ jobs:
 
             - **Materials**: ${{ steps.parse.outputs.materials }}
             - **Custom Model Data**: ${{ steps.parse.outputs.custom_model_data }}
-            - **Image**: ${{ steps.parse.outputs.image_url }}
+            - **Image URL**: ${{ steps.parse.outputs.image_url }}
+
+            ### Preview
+
+            <img src="https://raw.githubusercontent.com/${{ github.repository }}/custom-model/issue-${{ github.event.issue.number }}/assets/minecraft/textures/item/${{ steps.parse.outputs.custom_model_data }}.png" alt="Custom Model Preview" width="256" height="256" />
+
+            ---
 
             This PR was automatically generated from the issue.
           branch: custom-model/issue-${{ github.event.issue.number }}
@@ -146,11 +152,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const branch = `custom-model/issue-${context.issue.number}`;
+            const customModelData = '${{ steps.parse.outputs.custom_model_data }}';
+            const imageUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${branch}/assets/minecraft/textures/item/${customModelData}.png`;
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `✅ Custom model data has been processed!\n\nPull Request: #${{ steps.create_pr.outputs.pull-request-number }}\n\nPlease review and merge the PR to add the custom model data.`
+              body: `✅ Custom model data has been processed!\n\n**Pull Request:** #${{ steps.create_pr.outputs.pull-request-number }}\n\n### Preview\n\n<img src="${imageUrl}" alt="Custom Model Preview" width="256" height="256" />\n\nPlease review and merge the PR to add the custom model data.`
             });
 
             // Add success reaction
@@ -172,7 +182,7 @@ jobs:
               issue_number: context.issue.number,
               body: `❌ Failed to process custom model data. Please check the workflow logs for details.\n\n**Please create a new issue with the correct information.** Do not edit this issue.`
             });
-            
+
             // Add failure reaction
             await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
@@ -180,7 +190,7 @@ jobs:
               issue_number: context.issue.number,
               content: '-1'
             });
-            
+
             // Close the issue
             await github.rest.issues.update({
               owner: context.repo.owner,
