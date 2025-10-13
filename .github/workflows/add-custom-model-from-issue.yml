@@ -118,6 +118,8 @@ jobs:
       - name: Generate preview image (256x256, nearest-neighbor)
         run: |
           set -euo pipefail
+          PR_BRANCH="custom-model/issue-${{ github.event.issue.number }}"
+          echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
           SRC="assets/minecraft/textures/item/${{ steps.parse.outputs.custom_model_data }}.png"
           PREVIEW_DIR="preview"
           PREVIEW_FILE="${PREVIEW_DIR}/${{ steps.parse.outputs.custom_model_data }}.png"
@@ -134,7 +136,10 @@ jobs:
           convert "$SRC" -filter point -resize 256x256 -strip "$PREVIEW_FILE"
 
           echo "Preview generated at $PREVIEW_FILE"
-          echo "PREVIEW_FILE=$PREVIEW_FILE" >> $GITHUB_ENV
+          PREVIEW_URL="https://raw.githubusercontent.com/${{ github.repository }}/$PR_BRANCH/$PREVIEW_FILE"
+          echo "Preview URL: $PREVIEW_URL"
+
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
       - name: Create Pull Request
         id: create_pr
@@ -154,23 +159,15 @@ jobs:
 
             ### Preview (256x256, pixel-perfect)
 
-            ![Custom Model Preview](${{ env.PREVIEW_FILE }})
+            ![Custom Model Preview](${{ env.PREVIEW_URL }})
 
             ---
 
             This PR was automatically generated from the issue.
-          branch: custom-model/issue-${{ github.event.issue.number }}
+          branch: ${{ env.PR_BRANCH }}
           delete-branch: true
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-
-      - name: Get preview URL from PR branch
-        id: preview_url
-        run: |
-          BRANCH="custom-model/issue-${{ github.event.issue.number }}"
-          PREVIEW_URL="https://raw.githubusercontent.com/${{ github.repository }}/${BRANCH}/${{ env.PREVIEW_FILE }}"
-          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-          echo "Preview URL: $PREVIEW_URL"
 
       - name: Comment on issue
         if: steps.create_pr.outputs.pull-request-number
