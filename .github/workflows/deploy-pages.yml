@@ -22,8 +22,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Get all history to find merged PRs
-      
+          fetch-depth: 0 # Get all history to find merged PRs
+
       - name: Get latest merged PR
         id: latest_pr
         uses: actions/github-script@v7
@@ -36,7 +36,7 @@ jobs:
               sha: 'main',
               per_page: 50
             });
-            
+
             // Find first commit that has an associated merged PR
             for (const commit of commits.data) {
               const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
@@ -44,7 +44,7 @@ jobs:
                 repo: context.repo.repo,
                 commit_sha: commit.sha
               });
-              
+
               // Find merged PR
               const mergedPR = prs.data.find(pr => pr.merged_at !== null);
               if (mergedPR) {
@@ -55,7 +55,7 @@ jobs:
                 return;
               }
             }
-            
+
             // No merged PR found
             core.setOutput('pr_number', '');
             core.setOutput('pr_title', '');
@@ -87,7 +87,7 @@ jobs:
           echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
 
           # メタデータJSON作成
-          cat > public/metadata.json << 'JSONEOF'
+          cat > public/metadata.json << EOF
           {
             "version": "$(date +%Y%m%d-%H%M%S)",
             "sha1": "${{ steps.pack.outputs.sha1 }}",
@@ -101,7 +101,7 @@ jobs:
               "url": "${{ steps.latest_pr.outputs.pr_url }}"
             }
           }
-          JSONEOF
+          EOF
 
           cp index.html public/
 
