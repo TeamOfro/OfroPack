@@ -4,6 +4,8 @@ Ofro鯖のMinecraftリソースパック
 
 ## 🚀 使い方
 
+<https://teamofro.github.io/OfroPack/>
+
 ### ダウンロード
 
 最新版は以下のURLからダウンロードできます：
@@ -12,7 +14,7 @@ Ofro鯖のMinecraftリソースパック
 https://teamofro.github.io/OfroPack/OfroPack.zip
 ```
 
-### SHA256ハッシュ検証
+### SHA1ハッシュ検証
 
 ```bash
 curl -s https://teamofro.github.io/OfroPack/hash.txt

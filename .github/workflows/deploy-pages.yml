@@ -17,47 +17,47 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Create resource pack
         id: pack
         run: |
           # リソースパックをzip化
           zip -r OfroPack.zip assets/ pack.mcmeta
-          
+
           # SHA256ハッシュ計算
-          SHA256=$(sha256sum OfroPack.zip | awk '{print $1}')
-          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
-          
+          SHA1=$(sha1sum OfroPack.zip | awk '{print $1}')
+          echo "sha1=$SHA1" >> $GITHUB_OUTPUT
+
           # ファイルサイズ取得
           SIZE=$(stat -f%z OfroPack.zip 2>/dev/null || stat -c%s OfroPack.zip)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
-          
-          echo "Resource pack created: $SIZE bytes, SHA256: $SHA256"
-      
+
+          echo "Resource pack created: $SIZE bytes, SHA1: $SHA1"
+
       - name: Create public directory
         run: |
           mkdir -p public
           mv OfroPack.zip public/
-          
+
           # hash.txt作成
-          echo "${{ steps.pack.outputs.sha256 }}" > public/hash.txt
-          
+          echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
+
           # メタデータJSON作成（オプション、サーバー側で便利）
           cat > public/metadata.json << EOF
           {
             "version": "$(date +%Y%m%d-%H%M%S)",
-            "sha256": "${{ steps.pack.outputs.sha256 }}",
+            "sha1": "${{ steps.pack.outputs.sha1 }}",
             "size": ${{ steps.pack.outputs.size }},
             "commit": "${{ github.sha }}",
             "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "download_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip"
           }
           EOF
-          
+
           # index.html作成（人間が見る用）
           cat > public/index.html << 'EOF'
           <!DOCTYPE html>
@@ -70,14 +70,14 @@ jobs:
                   body {
                       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                       max-width: 800px;
-                      margin: 50px auto;
+                      margin: 30px auto;
                       padding: 20px;
                       background: #1a1a1a;
                       color: #e0e0e0;
                   }
                   .container {
                       background: #2a2a2a;
-                      padding: 30px;
+                      padding: 10px;
                       border-radius: 10px;
                       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
                   }
@@ -122,21 +122,21 @@ jobs:
               <div class="container">
                   <h1>🎨 OfroPack</h1>
                   <p class="center">Ofro鯖のMinecraftリソースパック</p>
-                  
+
                   <div class="center">
                       <a href="OfroPack.zip" class="download-btn">⬇️ ダウンロード</a>
                   </div>
-                  
+
                   <div class="info">
-                      <strong>SHA256:</strong><br>
-                      <span id="sha256">読み込み中...</span>
+                      <strong>SHA1:</strong><br>
+                      <span id="sha1">読み込み中...</span>
                   </div>
-                  
+
                   <div class="info">
                       <strong>サイズ:</strong> <span id="size">読み込み中...</span><br>
                       <strong>更新日時:</strong> <span id="updated">読み込み中...</span>
                   </div>
-                  
+
                   <h2>🔗 直接URL</h2>
                   <div class="info">
                       <strong>リソースパック:</strong><br>
@@ -144,7 +144,7 @@ jobs:
                       <strong>ハッシュ:</strong><br>
                       <code id="hash-url">読み込み中...</code>
                   </div>
-                  
+
                   <h2>📝 使い方</h2>
                   <p>Minecraftのserver.propertiesに以下を設定:</p>
                   <div class="info">
@@ -152,12 +152,12 @@ jobs:
                       resource-pack-sha1=（SHA1の場合、または空欄）
                   </div>
               </div>
-              
+
               <script>
                   fetch('metadata.json')
                       .then(r => r.json())
                       .then(data => {
-                          document.getElementById('sha256').textContent = data.sha256;
+                          document.getElementById('sha1').textContent = data.sha1;
                           document.getElementById('size').textContent = (data.size / 1024 / 1024).toFixed(2) + ' MB';
                           document.getElementById('updated').textContent = new Date(data.updated_at).toLocaleString('ja-JP');
                           document.getElementById('pack-url').textContent = data.download_url;
@@ -169,19 +169,19 @@ jobs:
           </body>
           </html>
           EOF
-      
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
-      
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      
+
       - name: Summary
         run: |
           echo "## 🎉 デプロイ完了!" >> $GITHUB_STEP_SUMMARY
@@ -192,6 +192,6 @@ jobs:
           echo "**ハッシュ URL:**" >> $GITHUB_STEP_SUMMARY
           echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/hash.txt" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**SHA256:** \`${{ steps.pack.outputs.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA1:** \`${{ steps.pack.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**サイズ:** $((${{ steps.pack.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
