@@ -4,15 +4,24 @@ on:
   issues:
     types: [opened]
 
+env:
+  # Common variables
+  ISSUE_NUMBER: ${{ github.event.issue.number }}
+  REPO_OWNER: ${{ github.repository_owner }}
+  REPO_NAME: ${{ github.event.repository.name }}
+
 jobs:
   parse-and-add:
     if: contains(github.event.issue.labels.*.name, 'custom-model')
-    # imagemagick is pre-installed on ubuntu-22.04
     runs-on: ubuntu-22.04
     permissions:
       contents: write
       pull-requests: write
       issues: write
+    
+    env:
+      # Job-specific variables
+      PR_BRANCH: custom-model/issue-${{ github.event.issue.number }}
 
     steps:
       - name: Checkout repository
@@ -70,75 +79,80 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Download image
+      - name: Download and validate image
         run: |
           set -euo pipefail
           IMAGE_URL="${{ steps.parse.outputs.image_url }}"
-          IMAGE_NAME="${{ steps.parse.outputs.custom_model_data }}.png"
-
-          HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
-
+          IMAGE_FILE="${{ steps.parse.outputs.custom_model_data }}.png"
+          
+          echo "Downloading image from: $IMAGE_URL"
+          HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$IMAGE_FILE" "$IMAGE_URL")
+          
           if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "Error: Failed to download image. HTTP status: $HTTP_CODE"
-            rm -f "$IMAGE_NAME"
+            echo "::error::Failed to download image (HTTP $HTTP_CODE)"
+            rm -f "$IMAGE_FILE"
             exit 1
           fi
-
-          if ! file "$IMAGE_NAME" | grep -q "PNG image"; then
-            echo "Error: Downloaded file is not a valid PNG image"
-            head -5 "$IMAGE_NAME" || true
-            rm -f "$IMAGE_NAME"
+          
+          if ! file "$IMAGE_FILE" | grep -q "PNG image"; then
+            echo "::error::Downloaded file is not a valid PNG image"
+            head -5 "$IMAGE_FILE" || true
+            rm -f "$IMAGE_FILE"
             exit 1
           fi
+          
+          echo "✓ Image downloaded and validated"
+          echo "IMAGE_FILE=$IMAGE_FILE" >> $GITHUB_ENV
 
-          echo "IMAGE_FILE=$IMAGE_NAME" >> $GITHUB_ENV
+      - name: Build processor tool
+        run: |
+          echo "Building Rust processor..."
+          cargo build --release
+          echo "✓ Build complete"
 
-      - name: Build tool
-        run: cargo build --release
-
-      - name: Run processor
+      - name: Process custom model data
         run: |
           set -euo pipefail
-          MATERIALS="${{ steps.parse.outputs.materials }}"
-          CUSTOM_MODEL_DATA="${{ steps.parse.outputs.custom_model_data }}"
-
+          
+          # Build arguments for materials
           ARGS=""
-          IFS=',' read -ra MATERIAL_ARRAY <<< "$MATERIALS"
-          for material in "${MATERIAL_ARRAY[@]}"; do
-            material=$(echo "$material" | xargs)
+          IFS=',' read -ra MATERIALS <<< "${{ steps.parse.outputs.materials }}"
+          for material in "${MATERIALS[@]}"; do
+            material=$(echo "$material" | xargs)  # trim whitespace
             ARGS="$ARGS -m $material"
           done
-
-          if [ -n "$CUSTOM_MODEL_DATA" ]; then
-            ARGS="$ARGS -c $CUSTOM_MODEL_DATA"
-          fi
-
+          
+          # Add custom model data
+          ARGS="$ARGS -c ${{ steps.parse.outputs.custom_model_data }}"
+          
+          echo "Running processor with: $ARGS $IMAGE_FILE"
           ./target/release/processer $ARGS "$IMAGE_FILE"
+          echo "✓ Custom model data processed"
 
-      - name: Generate preview image (256x256, nearest-neighbor)
+      - name: Generate preview image
         run: |
           set -euo pipefail
-          PR_BRANCH="custom-model/issue-${{ github.event.issue.number }}"
-          echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
-          SRC="assets/minecraft/textures/item/${{ steps.parse.outputs.custom_model_data }}.png"
+          
+          MODEL_NAME="${{ steps.parse.outputs.custom_model_data }}"
+          SRC="assets/minecraft/textures/item/${MODEL_NAME}.png"
           PREVIEW_DIR="preview"
-          PREVIEW_FILE="${PREVIEW_DIR}/${{ steps.parse.outputs.custom_model_data }}.png"
-
+          PREVIEW_FILE="${PREVIEW_DIR}/${MODEL_NAME}.png"
+          
           if [ ! -f "$SRC" ]; then
-            echo "Error: Source PNG not found at $SRC"
+            echo "::error::Source texture not found: $SRC"
             exit 1
           fi
-
-          # Create preview directory
+          
           mkdir -p "$PREVIEW_DIR"
-
-          # Generate 256x256 preview with nearest-neighbor (pixel-perfect)
+          
+          # Generate 256x256 preview with nearest-neighbor interpolation (pixel-perfect)
           convert "$SRC" -filter point -resize 256x256 -strip "$PREVIEW_FILE"
-
-          echo "Preview generated at $PREVIEW_FILE"
-          PREVIEW_URL="https://raw.githubusercontent.com/${{ github.repository }}/$PR_BRANCH/$PREVIEW_FILE"
+          
+          # Generate preview URL for GitHub raw content
+          PREVIEW_URL="https://raw.githubusercontent.com/${{ github.repository }}/${{ env.PR_BRANCH }}/${PREVIEW_FILE}"
+          
+          echo "✓ Preview generated: $PREVIEW_FILE"
           echo "Preview URL: $PREVIEW_URL"
-
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
 
       - name: Create Pull Request
@@ -146,44 +160,54 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Add custom model data from issue #${{ github.event.issue.number }}"
-          title: "Add custom model: ${{ steps.parse.outputs.custom_model_data }}"
+          commit-message: "Add custom model: ${{ steps.parse.outputs.custom_model_data }} (#${{ env.ISSUE_NUMBER }})"
+          title: "✨ Add custom model: ${{ steps.parse.outputs.custom_model_data }}"
           body: |
-            ## Custom Model Data Addition
-
-            Resolves #${{ github.event.issue.number }}
-
-            - **Materials**: ${{ steps.parse.outputs.materials }}
-            - **Custom Model Data**: ${{ steps.parse.outputs.custom_model_data }}
-            - **Image URL**: ${{ steps.parse.outputs.image_url }}
-
-            ### Preview (256x256, pixel-perfect)
-
+            ## 🎨 Custom Model Data Addition
+            
+            Resolves #${{ env.ISSUE_NUMBER }}
+            
+            ### Details
+            
+            - **Materials**: `${{ steps.parse.outputs.materials }}`
+            - **Custom Model Data**: `${{ steps.parse.outputs.custom_model_data }}`
+            - **Source Image**: ${{ steps.parse.outputs.image_url }}
+            
+            ### Preview (256×256, pixel-perfect)
+            
             ![Custom Model Preview](${{ env.PREVIEW_URL }})
-
+            
             ---
-
-            This PR was automatically generated from the issue.
+            
+            *This PR was automatically generated by GitHub Actions.*
           branch: ${{ env.PR_BRANCH }}
           delete-branch: true
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          committer: GitHub Actions Bot <actions@github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
 
-      - name: Comment on issue
+      - name: Comment success on issue
         if: steps.create_pr.outputs.pull-request-number
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = '${{ steps.preview_url.outputs.url }}';
-
+            const prNumber = '${{ steps.create_pr.outputs['pull-request-number'] }}';
+            const previewUrl = '${{ env.PREVIEW_URL }}';
+            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `✅ Custom model data has been processed!\n\n**Pull Request:** #${{ steps.create_pr.outputs['pull-request-number'] }}\n\n### Preview (256x256, pixel-perfect)\n\n![Custom Model Preview](${previewUrl})\n\nPlease review and merge the PR to add the custom model data.`
+              body: `## ✅ Custom model processed successfully!
+            
+            **Pull Request:** #${prNumber}
+            
+            ### Preview (256×256, pixel-perfect)
+            
+            ![Custom Model Preview](${previewUrl})
+            
+            Please review and merge the PR to add this custom model to the resource pack.`
             });
-
-            // Add success reaction
+            
             await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -191,7 +215,7 @@ jobs:
               content: '+1'
             });
 
-      - name: Comment on failure
+      - name: Comment failure on issue
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -200,18 +224,26 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `❌ Failed to process custom model data. Please check the workflow logs for details.\n\n**Please create a new issue with the correct information.** Do not edit this issue.`
+              body: `## ❌ Failed to process custom model
+            
+            The workflow encountered an error. Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+            
+            ### Next steps
+            
+            1. Review the error in the logs
+            2. Fix any issues with the provided information
+            3. **Create a new issue** with the correct details
+            
+            ⚠️ **Note:** Do not edit this issue. Editing does not re-trigger the workflow.`
             });
-
-            // Add failure reaction
+            
             await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               content: '-1'
             });
-
-            // Close the issue
+            
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
