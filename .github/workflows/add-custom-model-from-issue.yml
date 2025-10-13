@@ -131,7 +131,7 @@ jobs:
           mkdir -p "$PREVIEW_DIR"
 
           # Generate 256x256 preview with nearest-neighbor (pixel-perfect)
-          magick "$SRC" -filter point -resize 256x256 -strip "$PREVIEW_FILE"
+          convert "$SRC" -filter point -resize 256x256 -strip "$PREVIEW_FILE"
 
           echo "Preview generated at $PREVIEW_FILE"
           echo "PREVIEW_FILE=$PREVIEW_FILE" >> $GITHUB_ENV
