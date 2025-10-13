@@ -20,6 +20,13 @@
           "type": "minecraft:model",
           "model": "item/cutlas_king"
         }
+      },
+      {
+        "when": "postmortal",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/postmortal"
+        }
       }
     ]
   }
