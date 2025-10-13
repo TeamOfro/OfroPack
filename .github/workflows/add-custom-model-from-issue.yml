@@ -86,7 +86,9 @@ jobs:
           # Check if URL is from GitHub user-attachments (private assets)
           if [[ "$IMAGE_URL" == *"https://github.com/user-attachments/assets/"* ]]; then
             echo "Detected GitHub private asset, using authentication..."
-            HTTP_CODE=$(curl -H "Authorization: token ${{ secrets.ATTACHMENT_TOKEN }}" \
+            # デバッグ（302/404を確認）
+            curl -sSI -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "${IMAGE_URL}" | sed -n '/^HTTP/p;/^Location:/p'
+            HTTP_CODE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                              -H "Accept: application/vnd.github.v3+json" \
                              -L -w "%{http_code}" -o "$IMAGE_NAME" "$IMAGE_URL")
           else
