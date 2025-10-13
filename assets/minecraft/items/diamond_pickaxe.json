@@ -13,6 +13,13 @@
           "type": "minecraft:model",
           "model": "item/snow_pickaxe"
         }
+      },
+      {
+        "when": "tnt_pickaxe",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/tnt_pickaxe"
+        }
       }
     ]
   }
