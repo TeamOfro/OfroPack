@@ -2,7 +2,7 @@ name: Add Custom Model from Issue
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 jobs:
   parse-and-add:
@@ -170,13 +170,21 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `❌ Failed to process custom model data. Please check the workflow logs for details.`
+              body: `❌ Failed to process custom model data. Please check the workflow logs for details.\n\n**Please create a new issue with the correct information.** Do not edit this issue.`
             });
-
+            
             // Add failure reaction
             await github.rest.reactions.createForIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               content: '-1'
+            });
+            
+            // Close the issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
             });
