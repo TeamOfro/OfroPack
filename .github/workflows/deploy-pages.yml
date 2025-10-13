@@ -21,6 +21,46 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get all history to find merged PRs
+      
+      - name: Get latest merged PR
+        id: latest_pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get recent commits on main branch
+            const commits = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: 'main',
+              per_page: 50
+            });
+            
+            // Find first commit that has an associated merged PR
+            for (const commit of commits.data) {
+              const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: commit.sha
+              });
+              
+              // Find merged PR
+              const mergedPR = prs.data.find(pr => pr.merged_at !== null);
+              if (mergedPR) {
+                core.setOutput('pr_number', mergedPR.number);
+                core.setOutput('pr_title', mergedPR.title);
+                core.setOutput('pr_url', mergedPR.html_url);
+                console.log(`Found latest merged PR: #${mergedPR.number} - ${mergedPR.title}`);
+                return;
+              }
+            }
+            
+            // No merged PR found
+            core.setOutput('pr_number', '');
+            core.setOutput('pr_title', '');
+            core.setOutput('pr_url', '');
+            console.log('No merged PR found');
 
       - name: Create resource pack
         id: pack
@@ -46,17 +86,22 @@ jobs:
           # hash.txt作成
           echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
 
-          # メタデータJSON作成（オプション、サーバー側で便利）
-          cat > public/metadata.json << EOF
+          # メタデータJSON作成
+          cat > public/metadata.json << 'JSONEOF'
           {
             "version": "$(date +%Y%m%d-%H%M%S)",
             "sha1": "${{ steps.pack.outputs.sha1 }}",
             "size": ${{ steps.pack.outputs.size }},
             "commit": "${{ github.sha }}",
             "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "download_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip"
+            "download_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip",
+            "latest_pr": {
+              "number": "${{ steps.latest_pr.outputs.pr_number }}",
+              "title": "${{ steps.latest_pr.outputs.pr_title }}",
+              "url": "${{ steps.latest_pr.outputs.pr_url }}"
+            }
           }
-          EOF
+          JSONEOF
 
           cp index.html public/
 
