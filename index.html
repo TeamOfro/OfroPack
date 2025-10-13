@@ -5,106 +5,255 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OfroPack - Minecraft Resource Pack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-color: #1a1d21;
+      --card-bg-color: #2c313a;
+      --primary-color: #4CAF50;
+      --primary-hover-color: #5cb85c;
+      --text-color: #e0e0e0;
+      --muted-text-color: #a0a0a0;
+      --border-radius: 8px;
+      --font-family-sans: 'Noto Sans JP', sans-serif;
+      --font-family-mono: 'Roboto Mono', monospace;
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 800px;
-      margin: 30px auto;
-      padding: 20px;
-      background: #1a1a1a;
-      color: #e0e0e0;
+      font-family: var(--font-family-sans);
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 15px;
+      background: var(--bg-color);
+      color: var(--text-color);
     }
 
     .container {
-      background: #2a2a2a;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      background: var(--card-bg-color);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
 
     h1 {
-      color: #4CAF50;
+      color: var(--primary-color);
       text-align: center;
+      font-size: 2em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted-text-color);
+      margin-bottom: 25px;
+    }
+
+    .download-btn-container {
+      text-align: center;
+      margin-bottom: 25px;
     }
 
     .download-btn {
       display: inline-block;
-      background: #4CAF50;
+      background: var(--primary-color);
       color: white;
-      padding: 15px 30px;
+      padding: 12px 25px;
       text-decoration: none;
-      border-radius: 5px;
-      font-size: 18px;
-      margin: 20px 0;
-      transition: background 0.3s;
+      border-radius: var(--border-radius);
+      font-size: 1.1em;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.2s;
     }
 
     .download-btn:hover {
-      background: #45a049;
+      background: var(--primary-hover-color);
+      transform: translateY(-2px);
     }
 
-    .info {
-      background: #333;
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-box {
+      background: #373c47;
       padding: 15px;
+      border-radius: var(--border-radius);
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      color: var(--muted-text-color);
+      text-transform: uppercase;
+    }
+
+    .info-box p {
+      margin: 0;
+      font-size: 1em;
+      font-weight: bold;
+    }
+
+    .url-box {
+      background: #373c47;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      margin-bottom: 10px;
+    }
+
+    .url-box h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      color: var(--muted-text-color);
+      text-transform: uppercase;
+    }
+
+    .copyable-field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-color);
+      padding: 8px 12px;
       border-radius: 5px;
-      margin: 20px 0;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
     }
 
-    .center {
+    .copyable-field code {
+      font-family: var(--font-family-mono);
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .copy-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 7px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: background-color 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary-hover-color);
+    }
+
+    .footer {
       text-align: center;
+      margin-top: 25px;
+      color: var(--muted-text-color);
+      font-size: 0.85em;
     }
 
-    code {
-      background: #404040;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 14px;
-    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <h1>🎨 OfroPack</h1>
-    <p class="center">Ofro鯖のMinecraftリソースパック</p>
+    <p class="subtitle">Ofro鯖のMinecraftリソースパック</p>
 
-    <div class="center">
+    <div class="download-btn-container">
       <a href="OfroPack.zip" class="download-btn">⬇️ ダウンロード</a>
     </div>
 
-    <div class="info">
-      <strong>SHA1:</strong><br>
-      <span id="sha1">読み込み中...</span>
+    <div class="info-grid">
+      <div class="info-box">
+        <h3>サイズ</h3>
+        <p id="size">読み込み中...</p>
+      </div>
+      <div class="info-box">
+        <h3>最終更新</h3>
+        <p id="updated">読み込み中...</p>
+      </div>
     </div>
 
-    <div class="info">
-      <strong>サイズ:</strong> <span id="size">読み込み中...</span><br>
-      <strong>更新日時:</strong> <span id="updated">読み込み中...</span>
+    <div class="url-box">
+      <h3>SHA1 ハッシュ</h3>
+      <div class="copyable-field">
+        <code id="sha1">読み込み中...</code>
+        <button class="copy-btn" data-clipboard-target="#sha1">コピー</button>
+      </div>
     </div>
 
-    <h2>🔗 Direct URL</h2>
-    <div class="info">
-      <strong>リソースパック:</strong><br>
-      <code id="pack-url">読み込み中...</code><br><br>
-      <strong>ハッシュ:</strong><br>
-      <code id="hash-url">読み込み中...</code>
+    <div class="url-box">
+      <h3>リソースパック URL</h3>
+      <div class="copyable-field">
+        <code id="pack-url">読み込み中...</code>
+        <button class="copy-btn" data-clipboard-target="#pack-url">コピー</button>
+      </div>
+    </div>
+
+    <div class="url-box">
+      <h3>ハッシュ URL</h3>
+      <div class="copyable-field">
+        <code id="hash-url">読み込み中...</code>
+        <button class="copy-btn" data-clipboard-target="#hash-url">コピー</button>
+      </div>
     </div>
   </div>
 
+  <div class="footer">
+    <p>&copy; 2025 OfroPack. All Rights Reserved.</p>
+  </div>
+
   <script>
-    fetch('metadata.json')
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('sha1').textContent = data.sha1;
-        document.getElementById('size').textContent = (data.size / 1024 / 1024).toFixed(2) + ' MB';
-        document.getElementById('updated').textContent = new Date(data.updated_at).toLocaleString('ja-JP');
-        document.getElementById('pack-url').textContent = data.download_url;
-        document.getElementById('pack-url-2').textContent = data.download_url;
-        document.getElementById('hash-url').textContent = data.download_url.replace('OfroPack.zip', 'hash.txt');
-      })
-      .catch(e => console.error('Failed to load metadata:', e));
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('metadata.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById('sha1').textContent = data.sha1;
+          document.getElementById('size').textContent = (data.size / 1024).toFixed(2) + ' KB';
+          document.getElementById('updated').textContent = new Date(data.updated_at).toLocaleString('ja-JP');
+          document.getElementById('pack-url').textContent = data.download_url;
+          document.getElementById('hash-url').textContent = data.download_url.replace('OfroPack.zip', 'hash.txt');
+        })
+        .catch(e => {
+          console.error('Failed to load metadata:', e);
+          const errorText = '取得失敗';
+          document.getElementById('sha1').textContent = errorText;
+          document.getElementById('size').textContent = errorText;
+          document.getElementById('updated').textContent = errorText;
+          document.getElementById('pack-url').textContent = errorText;
+          document.getElementById('hash-url').textContent = errorText;
+        });
+
+      document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const targetSelector = button.getAttribute('data-clipboard-target');
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            navigator.clipboard.writeText(targetElement.textContent)
+              .then(() => {
+                button.textContent = 'コピー完了!';
+                setTimeout(() => {
+                  button.textContent = 'コピー';
+                }, 2000);
+              })
+              .catch(err => {
+                console.error('Copy failed:', err);
+                button.textContent = '失敗';
+                 setTimeout(() => {
+                  button.textContent = 'コピー';
+                }, 2000);
+              });
+          }
+        });
+      });
+    });
   </script>
 </body>
 
