@@ -27,6 +27,13 @@
           "type": "minecraft:model",
           "model": "item/postmortal"
         }
+      },
+      {
+        "when": "survival_knife",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/survival_knife"
+        }
       }
     ]
   }
