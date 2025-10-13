@@ -9,13 +9,13 @@ Ofro鯖のMinecraftリソースパック
 最新版は以下のURLからダウンロードできます：
 
 ```txt
-https://TeamOfro.github.io/OfroPack/OfroPack.zip
+https://teamofro.github.io/OfroPack/OfroPack.zip
 ```
 
 ### SHA256ハッシュ検証
 
 ```bash
-curl -s https://TeamOfro.github.io/OfroPack/hash.txt
+curl -s https://teamofro.github.io/OfroPack/hash.txt
 ```
 
 ## ✨ カスタムモデル追加
