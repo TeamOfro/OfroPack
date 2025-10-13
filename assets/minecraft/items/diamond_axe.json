@@ -20,6 +20,13 @@
           "type": "minecraft:model",
           "model": "item/sennsyuuraku"
         }
+      },
+      {
+        "when": "black_rod_axe",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/black_rod_axe"
+        }
       }
     ]
   }
