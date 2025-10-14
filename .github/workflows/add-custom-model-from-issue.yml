@@ -122,11 +122,9 @@ jobs:
             ARGS="$ARGS -m $material"
           done
           
-          # Add custom model data
-          ARGS="$ARGS -c ${{ steps.parse.outputs.custom_model_data }}"
-          
-          echo "Running processor with: $ARGS $IMAGE_FILE"
-          ./target/release/processer $ARGS "$IMAGE_FILE"
+          # Run the processor with 'add' subcommand
+          echo "Running processor: add $ARGS -c ${{ steps.parse.outputs.custom_model_data }} $IMAGE_FILE"
+          ./target/release/processer add $ARGS -c "${{ steps.parse.outputs.custom_model_data }}" "$IMAGE_FILE"
           echo "✓ Custom model data processed"
 
       - name: Generate preview image

@@ -8,7 +8,7 @@ mod file_utils;
 mod models;
 mod processor;
 
-use cli::Cli;
+use cli::{Cli, Commands};
 use processor::Processor;
 
 fn main() {
@@ -29,19 +29,29 @@ fn run() -> anyhow::Result<()> {
 
     cli.validate()?;
 
-    let custom_model_data = cli.get_custom_model_data()?;
-    let materials = cli.get_normalized_materials();
+    match &cli.command {
+        Commands::Add {
+            materials,
+            custom_model_data,
+            path_to_image,
+        } => {
+            let custom_model_data = cli::get_custom_model_data(custom_model_data, path_to_image)?;
+            let normalized_materials = cli::normalize_materials(materials);
 
-    let processor = Processor::new(custom_model_data, cli.path_to_image);
+            let processor = Processor::new(custom_model_data);
+            processor.add_with_texture(&normalized_materials, path_to_image)?;
+        }
+        Commands::Extend {
+            materials,
+            custom_model_data,
+        } => {
+            let custom_model_data = custom_model_data.to_lowercase();
+            let normalized_materials = cli::normalize_materials(materials);
 
-    processor.validate()?;
-    processor.prepare()?;
-
-    for material in materials {
-        processor.process_material(&material)?;
+            let processor = Processor::new(custom_model_data);
+            processor.extend_materials(&normalized_materials)?;
+        }
     }
-
-    processor.finalize()?;
 
     Ok(())
 }
