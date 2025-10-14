@@ -27,6 +27,13 @@
           "type": "minecraft:model",
           "model": "item/black_rod_axe"
         }
+      },
+      {
+        "when": "friday_the_13th",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/friday_the_13th"
+        }
       }
     ]
   }
