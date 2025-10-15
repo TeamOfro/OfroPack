@@ -101,11 +101,20 @@
       font-size: 1.1em;
       font-weight: bold;
       transition: background-color 0.3s, transform 0.2s;
+      margin: 5px;
     }
 
     .download-btn:hover {
       background: var(--primary-hover-color);
       transform: translateY(-2px);
+    }
+    
+    .download-btn:nth-child(2) {
+      background: #2196F3;
+    }
+    
+    .download-btn:nth-child(2):hover {
+      background: #1976D2;
     }
 
     .info-grid {
@@ -219,6 +228,7 @@
 
     <div class="download-btn-container">
       <a href="OfroPack.zip" class="download-btn">⬇️ ダウンロード</a>
+      <a href="gallery.html" class="download-btn" style="background: #2196F3; margin-left: 10px;">🎨 ギャラリー</a>
     </div>
 
     <div class="info-grid">

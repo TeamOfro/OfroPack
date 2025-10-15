@@ -81,3 +81,25 @@ OfroPack/
 ## 📝 ライセンス
 
 [LICENSE](LICENSE)を参照
+
+## ギャラリーのローカルプレビュー
+
+ギャラリーページをローカルで確認する方法:
+
+```bash
+# 1. ギャラリーデータを生成
+cargo run --release -- generate-gallery
+
+# 2. ローカルサーバーを起動
+python3 -m http.server 8000
+
+# 3. ブラウザで開く
+# http://localhost:8000/gallery.html
+```
+
+または、Rustの簡易HTTPサーバーを使用:
+
+```bash
+cargo install miniserve
+miniserve . -p 8000
+```

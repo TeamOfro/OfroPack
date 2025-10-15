@@ -10,8 +10,8 @@ pub fn validate_image(path: &Path) -> Result<ImageInfo> {
     }
 
     // Try to load image
-    let img = image::open(path)
-        .context(format!("画像の読み込みに失敗しました: {}", path.display()))?;
+    let img =
+        image::open(path).context(format!("画像の読み込みに失敗しました: {}", path.display()))?;
 
     let width = img.width();
     let height = img.height();

@@ -61,8 +61,10 @@ impl Processor {
         self.create_model_file(&model_path)?;
 
         // Copy texture
-        std::fs::copy(image_path, &texture_path)
-            .context(format!("テクスチャをコピーできませんでした: {}", texture_path.display()))?;
+        std::fs::copy(image_path, &texture_path).context(format!(
+            "テクスチャをコピーできませんでした: {}",
+            texture_path.display()
+        ))?;
         println!("  ✓ テクスチャ: {}", texture_path.display());
 
         println!(
@@ -121,8 +123,10 @@ impl Processor {
         create_parent_dir_all(&item_path)?;
 
         let mut item_override = if item_path.exists() {
-            read_json(&item_path)
-                .context(format!("アイテムJSONの読み込みに失敗: {}", item_path.display()))?
+            read_json(&item_path).context(format!(
+                "アイテムJSONの読み込みに失敗: {}",
+                item_path.display()
+            ))?
         } else {
             ItemOverride::new(material)
         };
@@ -142,8 +146,10 @@ impl Processor {
         }
 
         item_override.add_case(&self.custom_model_data);
-        write_json(&item_path, &item_override)
-            .context(format!("アイテムJSONの書き込みに失敗: {}", item_path.display()))?;
+        write_json(&item_path, &item_override).context(format!(
+            "アイテムJSONの書き込みに失敗: {}",
+            item_path.display()
+        ))?;
 
         println!("  ✓ '{}'", material);
 
@@ -153,8 +159,10 @@ impl Processor {
     /// Create the model JSON file
     fn create_model_file(&self, model_path: &Path) -> anyhow::Result<()> {
         let model_file = ModelFile::new(&self.custom_model_data);
-        write_json(model_path, &model_file)
-            .context(format!("モデルファイルの作成に失敗: {}", model_path.display()))?;
+        write_json(model_path, &model_file).context(format!(
+            "モデルファイルの作成に失敗: {}",
+            model_path.display()
+        ))?;
         println!("  ✓ モデル: {}", model_path.display());
         Ok(())
     }

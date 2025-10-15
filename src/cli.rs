@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand};
 
-/// A simple CLI to add custom model data to a Minecraft resource pack.
+/// CLI for OfroPack - Minecraft Resource Pack Manager
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
@@ -12,29 +12,36 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Add a new custom model with texture
+    /// 新しいカスタムモデルをテクスチャと共に追加
     Add {
-        /// The materials to add the custom model data to (e.g., diamond_axe)
-        #[arg(short, long, required = true)]
+        /// カンマ区切りのマテリアルリスト (例: diamond_axe,iron_sword)
+        #[arg(short, long, value_delimiter = ',', required = true)]
         materials: Vec<String>,
 
-        /// The name for the custom model data
+        /// カスタムモデルデータ名 (省略時は画像ファイル名を使用)
         #[arg(short, long)]
         custom_model_data: Option<String>,
 
-        /// The path to the image file for the custom model
+        /// テクスチャ画像ファイルのパス
         path_to_image: PathBuf,
     },
 
-    /// Add materials to an existing custom model
+    /// 既存のカスタムモデルにマテリアルを追加
     Extend {
-        /// The materials to add
-        #[arg(short, long, required = true)]
+        /// カンマ区切りのマテリアルリスト
+        #[arg(short, long, value_delimiter = ',', required = true)]
         materials: Vec<String>,
 
-        /// The name of the existing custom model data
+        /// カスタムモデルデータ名
         #[arg(short, long, required = true)]
         custom_model_data: String,
+    },
+
+    /// ギャラリー用のmodels.jsonを生成
+    GenerateGallery {
+        /// 出力ファイルパス (デフォルト: models.json)
+        #[arg(short, long, default_value = "models.json")]
+        output: PathBuf,
     },
 }
 
@@ -48,13 +55,14 @@ impl Cli {
             } => {
                 if materials.is_empty() {
                     return Err(anyhow::anyhow!(
-                        "At least one material must be specified using the --materials flag."
+                        "少なくとも1つのマテリアルを指定してください\n\
+                        例: -m diamond_axe,iron_sword"
                     ));
                 }
 
                 if !path_to_image.exists() {
                     return Err(anyhow::anyhow!(
-                        "Image file does not exist: {}",
+                        "画像ファイルが見つかりません: {}",
                         path_to_image.display()
                     ));
                 }
@@ -65,7 +73,7 @@ impl Cli {
             } => {
                 if materials.is_empty() {
                     return Err(anyhow::anyhow!(
-                        "At least one material must be specified using the --materials flag."
+                        "少なくとも1つのマテリアルを指定してください"
                     ));
                 }
 
@@ -74,9 +82,12 @@ impl Cli {
                     .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
                 {
                     return Err(anyhow::anyhow!(
-                        "Custom model data name must only contain lowercase letters, numbers, and underscores."
+                        "カスタムモデルデータ名は小文字英数字とアンダースコアのみ使用できます"
                     ));
                 }
+            }
+            Commands::GenerateGallery { output: _ } => {
+                // No validation needed
             }
         }
         Ok(())
@@ -92,7 +103,7 @@ pub fn get_custom_model_data(
         None => path_to_image
             .file_stem()
             .and_then(|s| s.to_str())
-            .ok_or_else(|| anyhow::anyhow!("Failed to get image file name"))?
+            .ok_or_else(|| anyhow::anyhow!("画像ファイル名を取得できません"))?
             .to_string(),
     };
 
@@ -101,7 +112,7 @@ pub fn get_custom_model_data(
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
     {
         return Err(anyhow::anyhow!(
-            "Custom model data name must only contain lowercase letters, numbers, and underscores."
+            "カスタムモデルデータ名は小文字英数字とアンダースコアのみ使用できます"
         ));
     }
 

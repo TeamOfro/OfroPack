@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カスタムモデルギャラリー - OfroPack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #1a1d21;
+      --card-bg-color: #2c313a;
+      --primary-color: #4CAF50;
+      --primary-hover-color: #5cb85c;
+      --text-color: #e0e0e0;
+      --muted-text-color: #a0a0a0;
+      --border-radius: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 20px;
+      background: var(--card-bg-color);
+      border-radius: var(--border-radius);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--muted-text-color);
+      font-size: 1.1em;
+    }
+
+    .nav {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 10px 20px;
+      background: var(--card-bg-color);
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s;
+    }
+
+    .nav a:hover {
+      background: #373c47;
+    }
+
+    .stats {
+      text-align: center;
+      margin-bottom: 30px;
+      color: var(--muted-text-color);
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .model-card {
+      background: var(--card-bg-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .model-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+    }
+
+    .model-texture {
+      width: 100%;
+      height: 280px;
+      background: #1a1d21;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .model-texture img {
+      max-width: 80%;
+      max-height: 80%;
+      width: 80%;
+      height: 80%;
+      object-fit: cover;
+      aspect-ratio: 1 / 1;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .model-info {
+      padding: 20px;
+    }
+
+    .model-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    .model-meta {
+      font-size: 0.9em;
+      color: var(--muted-text-color);
+      margin-bottom: 10px;
+    }
+
+    .materials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .material-tag {
+      background: #373c47;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--text-color);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted-text-color);
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px 20px;
+      color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 カスタムモデルギャラリー</h1>
+    <p class="subtitle">OfroPack に含まれる全てのカスタムモデル</p>
+  </div>
+
+  <div class="nav">
+    <a href="index.html">← ホームに戻る</a>
+  </div>
+
+  <div class="stats" id="stats">読み込み中...</div>
+
+  <div class="gallery" id="gallery">
+    <div class="loading">カスタムモデルを読み込んでいます...</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('models.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('モデルデータの読み込みに失敗しました');
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById('stats').textContent =
+            `全 ${data.count} 個のカスタムモデル`;
+
+          const gallery = document.getElementById('gallery');
+          gallery.innerHTML = '';
+
+          if (data.models.length === 0) {
+            gallery.innerHTML = '<div class="error">カスタムモデルが見つかりませんでした</div>';
+            return;
+          }
+
+          data.models.forEach(model => {
+            const card = document.createElement('div');
+            card.className = 'model-card';
+
+            const addedDate = new Date(model.added_date);
+            const dateStr = addedDate.toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+
+            card.innerHTML = `
+              <div class="model-texture">
+                <img src="${model.texture_url}" alt="${model.name}">
+              </div>
+              <div class="model-info">
+                <div class="model-name">${model.name}</div>
+                <div class="model-meta">
+                  📅 ${dateStr}
+                  ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
+                </div>
+                <div class="materials">
+                  ${model.materials.map(m =>
+                    `<span class="material-tag">${m}</span>`
+                  ).join('')}
+                </div>
+              </div>
+            `;
+
+            gallery.appendChild(card);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading models:', error);
+          document.getElementById('gallery').innerHTML =
+            `<div class="error">エラー: ${error.message}</div>`;
+        });
+    });
+  </script>
+</body>
+</html>
