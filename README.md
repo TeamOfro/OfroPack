@@ -45,7 +45,7 @@ Issueを作成するだけで自動的にリソースパックに追加されま
 cargo build --release
 
 # カスタムモデル追加
-./target/release/processer -m diamond_axe -c my_model image.png
+./target/release/processor -m diamond_axe -c my_model image.png
 
 # リソースパック作成
 zip -r OfroPack.zip assets/ pack.mcmeta

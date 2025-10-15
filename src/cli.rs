@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand};
 
@@ -85,7 +85,7 @@ impl Cli {
 
 pub fn get_custom_model_data(
     custom_model_data: &Option<String>,
-    path_to_image: &PathBuf,
+    path_to_image: &Path,
 ) -> anyhow::Result<String> {
     let custom_model_data = match custom_model_data {
         Some(name) => name.to_lowercase(),

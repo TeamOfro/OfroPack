@@ -4,6 +4,7 @@ use anyhow::Context;
 
 use crate::constants::Paths;
 use crate::file_utils::{create_parent_dir_all, read_json, write_json};
+use crate::image_validator::validate_image;
 use crate::models::{ItemOverride, ModelFile};
 
 pub struct Processor {
@@ -22,17 +23,36 @@ impl Processor {
 
         // Validate that model doesn't already exist
         if model_path.exists() {
-            return Err(anyhow::anyhow!(
-                "Model file already exists at '{}'. Use 'extend' command to add more materials.",
-                model_path.display()
-            ));
+            anyhow::bail!(
+                "カスタムモデルが既に存在します\n\
+                場所: {}\n\n\
+                💡 ヒント: 既存のモデルにマテリアルを追加する場合は 'extend' コマンドを使用してください:\n\
+                processor extend -m <マテリアル名> -c {}",
+                model_path.display(),
+                self.custom_model_data
+            );
         }
+
+        // Validate texture doesn't already exist
+        if texture_path.exists() {
+            eprintln!(
+                "⚠️  警告: テクスチャファイルが既に存在します: {}\n\
+                上書きされます。",
+                texture_path.display()
+            );
+        }
+
+        // Validate image
+        println!("🔍 画像を検証中...");
+        let image_info = validate_image(image_path)?;
+        println!("  ✓ 画像サイズ: {}", image_info.size_string());
 
         // Prepare directories
         create_parent_dir_all(&model_path)?;
         create_parent_dir_all(&texture_path)?;
 
         // Process materials
+        println!("📦 マテリアルを処理中...");
         for material in materials {
             self.add_material_to_item(material)?;
         }
@@ -41,10 +61,12 @@ impl Processor {
         self.create_model_file(&model_path)?;
 
         // Copy texture
-        std::fs::copy(image_path, &texture_path).context("Failed to copy image to texture path")?;
+        std::fs::copy(image_path, &texture_path)
+            .context(format!("テクスチャをコピーできませんでした: {}", texture_path.display()))?;
+        println!("  ✓ テクスチャ: {}", texture_path.display());
 
         println!(
-            "✓ Created custom model '{}' with {} material(s)",
+            "\n✅ カスタムモデル '{}' を作成しました ({} マテリアル)",
             self.custom_model_data,
             materials.len()
         );
@@ -59,26 +81,33 @@ impl Processor {
 
         // Validate that model already exists
         if !model_path.exists() {
-            return Err(anyhow::anyhow!(
-                "Model file does not exist at '{}'. Use 'add' command to create a new custom model.",
-                model_path.display()
-            ));
+            anyhow::bail!(
+                "カスタムモデルが見つかりません\n\
+                場所: {}\n\n\
+                💡 ヒント: 新しいモデルを作成する場合は 'add' コマンドを使用してください:\n\
+                processor add -m <マテリアル名> -c {} <画像ファイル>",
+                model_path.display(),
+                self.custom_model_data
+            );
         }
 
         if !texture_path.exists() {
-            return Err(anyhow::anyhow!(
-                "Texture file does not exist at '{}'. The custom model data may be incomplete.",
+            anyhow::bail!(
+                "テクスチャファイルが見つかりません\n\
+                場所: {}\n\n\
+                カスタムモデルが不完全な状態です。",
                 texture_path.display()
-            ));
+            );
         }
 
         // Process materials
+        println!("📦 マテリアルを追加中...");
         for material in materials {
             self.add_material_to_item(material)?;
         }
 
         println!(
-            "✓ Extended custom model '{}' with {} material(s)",
+            "\n✅ カスタムモデル '{}' に {} マテリアルを追加しました",
             self.custom_model_data,
             materials.len()
         );
@@ -92,7 +121,8 @@ impl Processor {
         create_parent_dir_all(&item_path)?;
 
         let mut item_override = if item_path.exists() {
-            read_json(&item_path).context("Failed to read existing item JSON")?
+            read_json(&item_path)
+                .context(format!("アイテムJSONの読み込みに失敗: {}", item_path.display()))?
         } else {
             ItemOverride::new(material)
         };
@@ -105,16 +135,17 @@ impl Processor {
             .any(|c| c.when == self.custom_model_data)
         {
             println!(
-                "⚠ Custom model '{}' already exists in material '{}', skipping",
-                self.custom_model_data, material
+                "  ⚠  '{}': カスタムモデル '{}' は既に存在します（スキップ）",
+                material, self.custom_model_data
             );
             return Ok(());
         }
 
         item_override.add_case(&self.custom_model_data);
-        write_json(&item_path, &item_override).context("Failed to write updated item JSON")?;
+        write_json(&item_path, &item_override)
+            .context(format!("アイテムJSONの書き込みに失敗: {}", item_path.display()))?;
 
-        println!("  • Added to material '{}'", material);
+        println!("  ✓ '{}'", material);
 
         Ok(())
     }
@@ -122,6 +153,9 @@ impl Processor {
     /// Create the model JSON file
     fn create_model_file(&self, model_path: &Path) -> anyhow::Result<()> {
         let model_file = ModelFile::new(&self.custom_model_data);
-        write_json(model_path, &model_file).context("Failed to write model JSON")
+        write_json(model_path, &model_file)
+            .context(format!("モデルファイルの作成に失敗: {}", model_path.display()))?;
+        println!("  ✓ モデル: {}", model_path.display());
+        Ok(())
     }
 }

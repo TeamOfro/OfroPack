@@ -5,6 +5,7 @@ use clap::Parser;
 mod cli;
 mod constants;
 mod file_utils;
+mod image_validator;
 mod models;
 mod processor;
 
@@ -13,7 +14,7 @@ use processor::Processor;
 
 fn main() {
     if let Err(err) = run() {
-        eprintln!("Error: {err:?}");
+        eprintln!("\n❌ エラー:\n{}", err);
         std::process::exit(1);
     }
 }
@@ -22,9 +23,10 @@ fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if !Path::new("assets").exists() {
-        return Err(anyhow::anyhow!(
-            "Assets directory does not exist. Please run this command in the root directory of a Minecraft resource pack."
-        ));
+        anyhow::bail!(
+            "assetsディレクトリが存在しません。\n\
+            Minecraftリソースパックのルートディレクトリで実行してください。"
+        );
     }
 
     cli.validate()?;
