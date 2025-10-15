@@ -43,6 +43,79 @@ pub enum Commands {
         #[arg(short, long, default_value = "models.json")]
         output: PathBuf,
     },
+
+    /// GitHub Actions runner utilities
+    Runner {
+        #[command(subcommand)]
+        subcommand: RunnerCommands,
+    },
+}
+
+/// GitHub Actions runner subcommands
+#[derive(Subcommand, Debug)]
+pub enum RunnerCommands {
+    /// Parse issue body and output GitHub Actions format
+    ParseIssue {
+        /// Issue body text (Markdown format)
+        #[arg(long)]
+        body: String,
+    },
+
+    /// Post a comment to an issue
+    Comment {
+        /// Issue number
+        #[arg(long)]
+        issue_number: u64,
+
+        /// Comment body (Markdown format)
+        #[arg(long)]
+        body: String,
+    },
+
+    /// Add a reaction to an issue
+    React {
+        /// Issue number
+        #[arg(long)]
+        issue_number: u64,
+
+        /// Reaction type (+1, -1, laugh, confused, heart, hooray, rocket, eyes)
+        #[arg(long)]
+        reaction: String,
+    },
+
+    /// Close an issue
+    CloseIssue {
+        /// Issue number
+        #[arg(long)]
+        issue_number: u64,
+    },
+
+    /// Generate preview image (256x256, pixel-perfect)
+    GeneratePreview {
+        /// Source texture path
+        #[arg(long)]
+        source: PathBuf,
+
+        /// Model name
+        #[arg(long)]
+        model_name: String,
+
+        /// Preview directory (default: preview)
+        #[arg(long, default_value = "preview")]
+        preview_dir: PathBuf,
+
+        /// Repository owner (for URL generation)
+        #[arg(long)]
+        repo_owner: Option<String>,
+
+        /// Repository name (for URL generation)
+        #[arg(long)]
+        repo_name: Option<String>,
+
+        /// Branch name (for URL generation)
+        #[arg(long)]
+        branch: Option<String>,
+    },
 }
 
 impl Cli {
@@ -89,6 +162,40 @@ impl Cli {
             Commands::GenerateGallery { output: _ } => {
                 // No validation needed
             }
+            Commands::Runner { subcommand } => match subcommand {
+                RunnerCommands::ParseIssue { body } => {
+                    if body.is_empty() {
+                        return Err(anyhow::anyhow!("Issue body is required"));
+                    }
+                }
+                RunnerCommands::Comment { body, .. } => {
+                    if body.is_empty() {
+                        return Err(anyhow::anyhow!("Comment body is required"));
+                    }
+                }
+                RunnerCommands::React { reaction, .. } => {
+                    let valid_reactions = [
+                        "+1", "-1", "laugh", "confused", "heart", "hooray", "rocket", "eyes",
+                    ];
+                    if !valid_reactions.contains(&reaction.as_str()) {
+                        return Err(anyhow::anyhow!(
+                            "Invalid reaction. Valid reactions: {}",
+                            valid_reactions.join(", ")
+                        ));
+                    }
+                }
+                RunnerCommands::CloseIssue { .. } => {
+                    // No validation needed
+                }
+                RunnerCommands::GeneratePreview { source, .. } => {
+                    if !source.exists() {
+                        return Err(anyhow::anyhow!(
+                            "Source texture not found: {}",
+                            source.display()
+                        ));
+                    }
+                }
+            },
         }
         Ok(())
     }

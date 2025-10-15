@@ -167,3 +167,174 @@ impl Processor {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    struct TestEnv {
+        _temp_dir: TempDir,
+    }
+
+    impl TestEnv {
+        fn new() -> Self {
+            let temp_dir = TempDir::new().unwrap();
+            let root = temp_dir.path().to_str().unwrap().to_string();
+
+            // Set up environment variable for test
+            // Safety: Tests are single-threaded and this is the only place we set this variable
+            unsafe {
+                std::env::set_var("TEST_ROOT", &root);
+            }
+
+            // Create pack structure
+            let assets_dir = temp_dir.path().join("assets").join("minecraft");
+            fs::create_dir_all(assets_dir.join("items")).unwrap();
+            fs::create_dir_all(assets_dir.join("models").join("item")).unwrap();
+            fs::create_dir_all(assets_dir.join("textures").join("item")).unwrap();
+
+            Self {
+                _temp_dir: temp_dir,
+            }
+        }
+    }
+
+    fn create_test_image(path: &Path) {
+        use image::{ImageBuffer, Rgba};
+        let img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(16, 16);
+        img.save(path).unwrap();
+    }
+
+    #[test]
+    fn test_add_with_texture_new_model() {
+        let _env = TestEnv::new();
+        let processor = Processor::new("test_model".to_string());
+
+        // Create test image
+        let image_path = std::env::temp_dir().join("test_image.png");
+        create_test_image(&image_path);
+
+        let materials = vec!["diamond_sword".to_string()];
+        let result = processor.add_with_texture(&materials, &image_path);
+
+        assert!(result.is_ok());
+
+        // Verify files were created
+        let model_path = Paths::model_path("test_model");
+        let texture_path = Paths::texture_path("test_model");
+        let item_path = Paths::item_path("diamond_sword");
+
+        assert!(model_path.exists());
+        assert!(texture_path.exists());
+        assert!(item_path.exists());
+
+        // Cleanup
+        fs::remove_file(image_path).ok();
+    }
+
+    #[test]
+    fn test_add_with_texture_duplicate_model() {
+        let _env = TestEnv::new();
+        let processor = Processor::new("duplicate_model".to_string());
+
+        // Create test image
+        let image_path = std::env::temp_dir().join("test_image_dup.png");
+        create_test_image(&image_path);
+
+        let materials = vec!["diamond_sword".to_string()];
+
+        // First add should succeed
+        processor.add_with_texture(&materials, &image_path).unwrap();
+
+        // Second add should fail
+        let result = processor.add_with_texture(&materials, &image_path);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("カスタムモデルが既に存在します"));
+
+        // Cleanup
+        fs::remove_file(image_path).ok();
+    }
+
+    #[test]
+    fn test_extend_materials() {
+        let _env = TestEnv::new();
+        let processor = Processor::new("extend_test".to_string());
+
+        // Create test image and initial model
+        let image_path = std::env::temp_dir().join("test_image_extend.png");
+        create_test_image(&image_path);
+
+        let initial_materials = vec!["diamond_sword".to_string()];
+        processor
+            .add_with_texture(&initial_materials, &image_path)
+            .unwrap();
+
+        // Extend with new material
+        let new_materials = vec!["iron_sword".to_string()];
+        let result = processor.extend_materials(&new_materials);
+
+        assert!(result.is_ok());
+
+        // Verify new item file was created
+        let item_path = Paths::item_path("iron_sword");
+        assert!(item_path.exists());
+
+        // Cleanup
+        fs::remove_file(image_path).ok();
+    }
+
+    #[test]
+    fn test_extend_materials_nonexistent_model() {
+        let _env = TestEnv::new();
+        let processor = Processor::new("nonexistent_model".to_string());
+
+        let materials = vec!["diamond_sword".to_string()];
+        let result = processor.extend_materials(&materials);
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("カスタムモデルが見つかりません"));
+    }
+
+    #[test]
+    fn test_add_material_duplicate() {
+        let _env = TestEnv::new();
+        let processor = Processor::new("dup_material_test".to_string());
+
+        // Create test image and model
+        let image_path = std::env::temp_dir().join("test_image_dup_mat.png");
+        create_test_image(&image_path);
+
+        let materials = vec!["diamond_sword".to_string()];
+        processor
+            .add_with_texture(&materials, &image_path)
+            .unwrap();
+
+        // Try to add same material again
+        let result = processor.add_material_to_item("diamond_sword");
+        assert!(result.is_ok()); // Should succeed but skip
+
+        // Verify only one entry exists
+        let item_path = Paths::item_path("diamond_sword");
+        let item_override: ItemOverride = read_json(&item_path).unwrap();
+        assert_eq!(
+            item_override
+                .model
+                .cases
+                .iter()
+                .filter(|c| c.when == "dup_material_test")
+                .count(),
+            1
+        );
+
+        // Cleanup
+        fs::remove_file(image_path).ok();
+    }
+}

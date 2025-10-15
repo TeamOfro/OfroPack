@@ -9,10 +9,12 @@ mod gallery;
 mod image_validator;
 mod models;
 mod processor;
+mod runner;
 
-use cli::{Cli, Commands};
+use cli::{Cli, Commands, RunnerCommands};
 use gallery::GalleryGenerator;
 use processor::Processor;
+use runner::{GitHubClient, IssueParser, PreviewGenerator};
 
 fn main() {
     if let Err(err) = run() {
@@ -24,9 +26,9 @@ fn main() {
 fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    // Validate that we're in a resource pack directory (except for generate-gallery)
+    // Validate that we're in a resource pack directory (except for generate-gallery and runner commands)
     match &cli.command {
-        Commands::GenerateGallery { .. } => {}
+        Commands::GenerateGallery { .. } | Commands::Runner { .. } => {}
         _ => {
             if !Path::new("assets").exists() {
                 anyhow::bail!(
@@ -65,6 +67,44 @@ fn run() -> anyhow::Result<()> {
             let generator = GalleryGenerator::new(output.clone());
             generator.generate()?;
         }
+        Commands::Runner { subcommand } => match subcommand {
+            RunnerCommands::ParseIssue { body } => {
+                let parsed = IssueParser::parse(body)?;
+                println!("{}", IssueParser::output_github_actions(&parsed));
+            }
+            RunnerCommands::Comment { issue_number, body } => {
+                let client = GitHubClient::from_env()?;
+                client.comment_issue(*issue_number, body)?;
+            }
+            RunnerCommands::React {
+                issue_number,
+                reaction,
+            } => {
+                let client = GitHubClient::from_env()?;
+                client.react_issue(*issue_number, reaction)?;
+            }
+            RunnerCommands::CloseIssue { issue_number } => {
+                let client = GitHubClient::from_env()?;
+                client.close_issue(*issue_number)?;
+            }
+            RunnerCommands::GeneratePreview {
+                source,
+                model_name,
+                preview_dir,
+                repo_owner,
+                repo_name,
+                branch,
+            } => {
+                let generator = PreviewGenerator::new(preview_dir);
+                let preview_path = generator.generate(source, model_name)?;
+
+                // Generate URL if repo info provided
+                if let (Some(owner), Some(name), Some(br)) = (repo_owner, repo_name, branch) {
+                    let url = PreviewGenerator::generate_url(owner, name, br, &preview_path);
+                    println!("preview_url={}", url);
+                }
+            }
+        },
     }
 
     Ok(())
