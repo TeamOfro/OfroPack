@@ -1,0 +1,41 @@
+name: extend-model
+description: 既存のカスタムモデルにマテリアルを追加
+title: "[拡張] "
+labels: ["extend-model"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 既存カスタムモデルの拡張
+        既存のカスタムモデルに新しいマテリアルを追加します。
+        
+        **注意事項:**
+        - 既に存在するカスタムモデルデータ名を指定してください
+        - エラーが発生した場合、このIssueは自動的にクローズされます
+        - Issueの編集では再実行されません。エラーの場合は新しいIssueを作成してください
+  
+  - type: input
+    id: materials
+    attributes:
+      label: マテリアル
+      description: "追加するマテリアルのカンマ区切りリスト（例: diamond_axe,iron_sword）"
+      placeholder: "diamond_axe,iron_sword"
+    validations:
+      required: true
+  
+  - type: input
+    id: custom_model_data
+    attributes:
+      label: カスタムモデルデータ名
+      description: "既に存在するカスタムモデルデータ名（例: my_custom_model）"
+      placeholder: "my_custom_model"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: notes
+    attributes:
+      label: 補足事項
+      description: "この拡張に関する追加情報（任意）"
+    validations:
+      required: false
