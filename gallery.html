@@ -32,6 +32,68 @@
       min-height: 100vh;
     }
 
+    .filter-panel {
+      position: sticky;
+      top: 20px;
+      background: var(--card-bg-color);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 30px;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+      z-index: 10;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .filter-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-group label {
+      color: var(--muted-text-color);
+      font-size: 0.9em;
+    }
+
+    .filter-group input[type="text"] {
+      background: #1a1d21;
+      border: 1px solid #373c47;
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: var(--text-color);
+      font-family: 'Roboto Mono', monospace;
+      min-width: 200px;
+    }
+
+    .filter-group input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .filter-group button {
+      background: var(--primary-color);
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .filter-group button:hover {
+      background: var(--primary-hover-color);
+    }
+
     .header {
       text-align: center;
       margin-bottom: 40px;
@@ -127,6 +189,32 @@
       color: var(--primary-color);
       margin-bottom: 10px;
       font-family: 'Roboto Mono', monospace;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 30px;
+    }
+
+    .model-name:hover {
+      color: var(--primary-hover-color);
+    }
+
+    .model-name::after {
+      content: '📋';
+      position: absolute;
+      right: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .model-name:hover::after {
+      opacity: 0.7;
+    }
+
+    .model-name.copied::after {
+      content: '✓';
+      opacity: 1;
+      color: var(--primary-color);
     }
 
     .model-meta {
@@ -173,6 +261,17 @@
     <a href="index.html">← ホームに戻る</a>
   </div>
 
+  <div class="filter-panel">
+    <div class="filter-title">🔍 フィルター</div>
+    <div class="filter-group">
+      <label for="filter-material">マテリアル:</label>
+      <input type="text" id="filter-material" placeholder="例: diamond_axe">
+      <label for="filter-id">CustomModelData ID:</label>
+      <input type="text" id="filter-id" placeholder="例: sennsyuuraku">
+      <button id="reset-filters">クリア</button>
+    </div>
+  </div>
+
   <div class="stats" id="stats">読み込み中...</div>
 
   <div class="gallery" id="gallery">
@@ -180,6 +279,87 @@
   </div>
 
   <script>
+    let allModels = [];
+
+    function copyToClipboard(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        element.classList.add('copied');
+        setTimeout(() => {
+          element.classList.remove('copied');
+        }, 1500);
+      });
+    }
+
+    function filterModels() {
+      const materialFilter = document.getElementById('filter-material').value.toLowerCase().trim();
+      const idFilter = document.getElementById('filter-id').value.toLowerCase().trim();
+
+      const filtered = allModels.filter(model => {
+        const matchesMaterial = !materialFilter ||
+          model.materials.some(m => m.toLowerCase().includes(materialFilter));
+        const matchesId = !idFilter ||
+          model.name.toLowerCase().includes(idFilter);
+        return matchesMaterial && matchesId;
+      });
+
+      renderModels(filtered);
+
+      const total = allModels.length;
+      const showing = filtered.length;
+      document.getElementById('stats').textContent =
+        showing === total
+          ? `全 ${total} 個のカスタムモデル`
+          : `${showing} / ${total} 個のカスタムモデルを表示中`;
+    }
+
+    function renderModels(models) {
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+
+      if (models.length === 0) {
+        gallery.innerHTML = '<div class="error">条件に一致するカスタムモデルが見つかりませんでした</div>';
+        return;
+      }
+
+      models.forEach(model => {
+        const card = document.createElement('div');
+        card.className = 'model-card';
+
+        const addedDate = new Date(model.added_date);
+        const dateStr = addedDate.toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+
+        card.innerHTML = `
+          <div class="model-texture">
+            <img src="${model.texture_url}" alt="${model.name}">
+          </div>
+          <div class="model-info">
+            <div class="model-name" data-id="${model.name}">${model.name}</div>
+            <div class="model-meta">
+              📅 ${dateStr}
+              ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
+            </div>
+            <div class="materials">
+              ${model.materials.map(m =>
+                `<span class="material-tag">${m}</span>`
+              ).join('')}
+            </div>
+          </div>
+        `;
+
+        // Add click event for copying ID
+        const nameElement = card.querySelector('.model-name');
+        nameElement.addEventListener('click', () => {
+          copyToClipboard(model.name, nameElement);
+        });
+
+        gallery.appendChild(card);
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       fetch('models.json')
         .then(response => {
@@ -189,47 +369,16 @@
           return response.json();
         })
         .then(data => {
-          document.getElementById('stats').textContent =
-            `全 ${data.count} 個のカスタムモデル`;
+          allModels = data.models;
+          filterModels();
 
-          const gallery = document.getElementById('gallery');
-          gallery.innerHTML = '';
-
-          if (data.models.length === 0) {
-            gallery.innerHTML = '<div class="error">カスタムモデルが見つかりませんでした</div>';
-            return;
-          }
-
-          data.models.forEach(model => {
-            const card = document.createElement('div');
-            card.className = 'model-card';
-
-            const addedDate = new Date(model.added_date);
-            const dateStr = addedDate.toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            });
-
-            card.innerHTML = `
-              <div class="model-texture">
-                <img src="${model.texture_url}" alt="${model.name}">
-              </div>
-              <div class="model-info">
-                <div class="model-name">${model.name}</div>
-                <div class="model-meta">
-                  📅 ${dateStr}
-                  ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
-                </div>
-                <div class="materials">
-                  ${model.materials.map(m =>
-                    `<span class="material-tag">${m}</span>`
-                  ).join('')}
-                </div>
-              </div>
-            `;
-
-            gallery.appendChild(card);
+          // Setup filter event listeners
+          document.getElementById('filter-material').addEventListener('input', filterModels);
+          document.getElementById('filter-id').addEventListener('input', filterModels);
+          document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('filter-material').value = '';
+            document.getElementById('filter-id').value = '';
+            filterModels();
           });
         })
         .catch(error => {
