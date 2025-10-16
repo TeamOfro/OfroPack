@@ -236,11 +236,18 @@
       content: '📋';
       position: absolute;
       right: 0;
+      opacity: 0;
+    }
+
+    .model-name:hover::after {
+      opacity: 1;
+      transition: opacity 0.3s;
     }
 
     .model-name.copied::after {
       content: '✓';
       color: var(--primary-color);
+      opacity: 1;
     }
 
     .model-meta {
