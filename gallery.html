@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カスタムモデルギャラリー - OfroPack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #1a1d21;
+      --card-bg-color: #2c313a;
+      --primary-color: #4CAF50;
+      --primary-hover-color: #5cb85c;
+      --text-color: #e0e0e0;
+      --muted-text-color: #a0a0a0;
+      --border-color: #373c47;
+      --border-radius: 8px;
+      --font-family-sans: 'Noto Sans JP', sans-serif;
+      --font-family-mono: 'Roboto Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-family-sans);
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* GitHub Navigation */
+    .github-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 80px 80px 0;
+      border-color: transparent var(--primary-color) transparent transparent;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      z-index: 1000;
+    }
+
+    .github-nav:hover {
+      border-color: transparent var(--primary-hover-color) transparent transparent;
+    }
+
+    .github-icon {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      z-index: 1001;
+      pointer-events: none;
+    }
+
+    .github-icon svg {
+      fill: white;
+      width: 100%;
+      height: 100%;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: var(--card-bg-color);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 30px;
+    }
+
+    .header-title h1 {
+      color: var(--primary-color);
+      font-size: 2.2em;
+      margin-bottom: 5px;
+    }
+
+    .header-title .subtitle {
+      color: var(--muted-text-color);
+      font-size: 1em;
+    }
+
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 1px solid var(--primary-color);
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, color 0.3s;
+      white-space: nowrap;
+    }
+
+    .nav a:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .filter-panel {
+      padding-top: 15px;
+      padding-bottom: 15px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .filter-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-group label {
+      color: var(--muted-text-color);
+      font-size: 0.9em;
+    }
+
+    .filter-group input[type="text"] {
+      background: #1a1d21;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: var(--text-color);
+      font-family: var(--font-family-mono);
+      min-width: 180px;
+      transition: border-color 0.3s;
+    }
+
+    .filter-group input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .stats {
+      text-align: right;
+      margin-bottom: 20px;
+      color: var(--muted-text-color);
+      font-size: 0.9em;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .model-card {
+      background: #1f2328;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+
+    .model-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .model-texture {
+      width: 100%;
+      height: 280px;
+      background: #1a1d21;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .model-texture img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .model-info {
+      padding: 20px;
+    }
+
+    .model-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      font-family: var(--font-family-mono);
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 30px;
+    }
+
+    .model-name:hover {
+      color: var(--primary-hover-color);
+    }
+
+    .model-name::after {
+      content: '📋';
+      position: absolute;
+      right: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .model-name:hover::after {
+      opacity: 0.7;
+    }
+
+    .model-name.copied::after {
+      content: '✓';
+      opacity: 1;
+      color: var(--primary-color);
+    }
+
+    .model-meta {
+      font-size: 0.9em;
+      color: var(--muted-text-color);
+      margin-bottom: 15px;
+    }
+
+    .materials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .material-tag {
+      background: var(--border-color);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--text-color);
+      font-family: var(--font-family-mono);
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted-text-color);
+      grid-column: 1 / -1;
+    }
+
+    .error {
+      color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <!-- GitHub Navigation -->
+  <a href="#" id="github-link" class="github-nav"></a>
+  <div class="github-icon">
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div class="header-title">
+        <h1>🎨 カスタムモデルギャラリー</h1>
+        <p class="subtitle">OfroPack に含まれる全てのカスタムモデル</p>
+      </div>
+      <div class="nav">
+        <a href="index.html">← ホームに戻る</a>
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <div class="filter-group">
+        <label for="filter-material">マテリアル:</label>
+        <input type="text" id="filter-material" placeholder="例: diamond_axe">
+        <label for="filter-id">CustomModelData ID:</label>
+        <input type="text" id="filter-id" placeholder="例: sennsyuuraku">
+      </div>
+      <div class="stats" id="stats">読み込み中...</div>
+    </div>
+
+    <div class="gallery" id="gallery">
+      <div class="loading">カスタムモデルを読み込んでいます...</div>
+    </div>
+  </div>
+
+  <script>
+    let allModels = [];
+
+    function copyToClipboard(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        element.classList.add('copied');
+        setTimeout(() => {
+          element.classList.remove('copied');
+        }, 1500);
+      });
+    }
+
+    function filterModels() {
+      const materialFilter = document.getElementById('filter-material').value.toLowerCase().trim();
+      const idFilter = document.getElementById('filter-id').value.toLowerCase().trim();
+
+      const filtered = allModels.filter(model => {
+        const matchesMaterial = !materialFilter ||
+          model.materials.some(m => m.toLowerCase().includes(materialFilter));
+        const matchesId = !idFilter ||
+          model.name.toLowerCase().includes(idFilter);
+        return matchesMaterial && matchesId;
+      });
+
+      renderModels(filtered);
+
+      const total = allModels.length;
+      const showing = filtered.length;
+      document.getElementById('stats').textContent =
+        showing === total
+          ? `全 ${total} 個のカスタムモデル`
+          : `${showing} / ${total} 個のカスタムモデルを表示中`;
+    }
+
+    function renderModels(models) {
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+
+      if (models.length === 0) {
+        gallery.innerHTML = '<div class="error">条件に一致するカスタムモデルが見つかりませんでした</div>';
+        return;
+      }
+
+      models.forEach(model => {
+        const card = document.createElement('div');
+        card.className = 'model-card';
+
+        const addedDate = new Date(model.added_date);
+        const dateStr = addedDate.toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+
+        card.innerHTML = `
+          <div class="model-texture">
+            <img src="${model.texture_url}" alt="${model.name}">
+          </div>
+          <div class="model-info">
+            <div class="model-name" data-id="${model.name}">${model.name}</div>
+            <div class="model-meta">
+              📅 ${dateStr}
+              ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
+            </div>
+            <div class="materials">
+              ${model.materials.map(m =>
+                `<span class="material-tag">${m}</span>`
+              ).join('')}
+            </div>
+          </div>
+        `;
+
+        // Add click event for copying ID
+        const nameElement = card.querySelector('.model-name');
+        nameElement.addEventListener('click', () => {
+          copyToClipboard(model.name, nameElement);
+        });
+
+        gallery.appendChild(card);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set GitHub repository link
+      const repoUrl = window.location.pathname.match(/\/([^\/]+)\/?$/)?.[1] || 'OfroPack';
+      const owner = window.location.hostname.split('.')[0];
+      const githubLink = document.getElementById('github-link');
+      if (githubLink) {
+        githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+      }
+
+      fetch('models.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('モデルデータの読み込みに失敗しました');
+          }
+          return response.json();
+        })
+        .then(data => {
+          allModels = data.models.sort((a, b) => new Date(b.added_date) - new Date(a.added_date));
+          filterModels();
+
+          // Setup filter event listeners
+          document.getElementById('filter-material').addEventListener('input', filterModels);
+          document.getElementById('filter-id').addEventListener('input', filterModels);
+        })
+        .catch(error => {
+          console.error('Error loading models:', error);
+          document.getElementById('gallery').innerHTML =
+            `<div class="error">エラー: ${error.message}</div>`;
+          document.getElementById('stats').textContent = '';
+        });
+    });
+  </script>
+</body>
+</html>

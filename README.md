@@ -24,14 +24,14 @@ curl -s https://teamofro.github.io/OfroPack/hash.txt
 
 Issueを作成するだけで自動的にリソースパックに追加されます。
 
-1. [Issues](../../issues/new/choose)タブから **"Request to add a custom model data"** を選択
+1. [Issues](../../issues/new/choose)タブから **"カスタムモデルデータの追加リクエスト"** を選択
 2. 必要な情報を入力：
-   - **Materials**: `diamond_axe,iron_sword`
-   - **Custom Model Data**: `my_model`（小文字・数字・アンダースコアのみ）
-   - **Image URL**: 画像の公開URL
+   - **マテリアル**: `diamond_axe,iron_sword`（カンマ区切り）
+   - **カスタムモデルデータ名**: `my_model`（小文字・数字・アンダースコアのみ）
+   - **画像URL**: 画像の公開URL
 3. Issueを作成
 
-数分後、自動的にPull Requestが作成され、IssueとPRの両方に**画像プレビュー（256x256）**が表示されます。
+数分後、自動的にPull Requestが作成され、IssueとPRの両方に**画像プレビュー（256×256）**が表示されます。
 マージ後にGitHub Pagesに反映されます。
 
 詳細は[GITHUB_ACTIONS.md](GITHUB_ACTIONS.md)を参照。
@@ -45,7 +45,7 @@ Issueを作成するだけで自動的にリソースパックに追加されま
 cargo build --release
 
 # カスタムモデル追加
-./target/release/processer -m diamond_axe -c my_model image.png
+./target/release/processor -m diamond_axe -c my_model image.png
 
 # リソースパック作成
 zip -r OfroPack.zip assets/ pack.mcmeta
@@ -81,3 +81,25 @@ OfroPack/
 ## 📝 ライセンス
 
 [LICENSE](LICENSE)を参照
+
+## ギャラリーのローカルプレビュー
+
+ギャラリーページをローカルで確認する方法:
+
+```bash
+# 1. ギャラリーデータを生成
+cargo run --release -- generate-gallery
+
+# 2. ローカルサーバーを起動
+python3 -m http.server 8000
+
+# 3. ブラウザで開く
+# http://localhost:8000/gallery.html
+```
+
+または、Rustの簡易HTTPサーバーを使用:
+
+```bash
+cargo install miniserve
+miniserve . -p 8000
+```

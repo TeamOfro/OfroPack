@@ -1,20 +1,20 @@
-# GitHub Actions で Custom Model Data を追加する
+# GitHub Actions でカスタムモデルデータを追加する
 
-このリポジトリでは、GitHub Actions を使って自動的に Custom Model Data を追加できます。
+このリポジトリでは、GitHub Actionsを使って自動的にカスタムモデルデータを追加できます。
 
-## 方法: Issue から実行
+## 使い方: Issueから実行
 
 1. GitHubリポジトリの **Issues** タブに移動
 2. **"New issue"** をクリック
-3. **"Request to add a custom model data"** テンプレートを選択
+3. **"カスタムモデルデータの追加リクエスト"** テンプレートを選択
 4. フォームに必要な情報を入力：
-   - **Materials**: マテリアル名（カンマ区切り）
-   - **Custom Model Data**: カスタムモデルデータ名（必須、小文字・数字・アンダースコアのみ）
-   - **Image URL**: 画像ファイルのURL（直接アクセス可能なURL）
+   - **マテリアル**: マテリアル名（カンマ区切り、例: `diamond_axe,iron_sword`）
+   - **カスタムモデルデータ名**: カスタムモデルデータ名（必須、小文字・数字・アンダースコアのみ）
+   - **画像URL**: 画像ファイルのURL（直接アクセス可能なURL）
 5. Issueを作成
 
 Issueが作成されると、自動的にワークフローが実行され、Pull Requestが作成されます。
-処理が完了すると、Issueにコメントが追加され、**画像のプレビュー（256x256）**が表示されます。
+処理が完了すると、Issueにコメントが追加され、**画像のプレビュー（256×256）**が表示されます。
 
 **重要**: エラーが発生した場合、Issueは自動的にクローズされます。修正する場合は、**新しいIssueを作成**してください（既存のIssueを編集しても再実行されません）。
 
@@ -30,9 +30,9 @@ Issueが作成されると、自動的にワークフローが実行され、Pul
 ## 例
 
 ```txt
-Materials: diamond_axe,iron_sword,golden_hoe
-Custom Model Data: special_weapon
-Image URL: https://i.imgur.com/example.png
+マテリアル: diamond_axe,iron_sword,golden_hoe
+カスタムモデルデータ名: special_weapon
+画像URL: https://i.imgur.com/example.png
 ```
 
 ## 注意事項
@@ -41,7 +41,21 @@ Image URL: https://i.imgur.com/example.png
 - カスタムモデルデータ名は**必須**で、英小文字、数字、アンダースコアのみ使用可能
 - 画像ファイルはPNG形式である必要があります
 - 画像URLは直接アクセス可能な公開URLを使用してください（Imgur、Discord添付など）
-- ワークフローは画像のダウンロードとPNG形式を検証します
+- ワークフローは画像のダウンロードとPNG形式を自動検証します
 - 同じカスタムモデルデータ名が既に存在する場合、エラーになります
 - **エラーが発生した場合、Issueは自動的にクローズされます。新しいIssueを作成してください**
 - Issueの編集では再実行されません（意図的な仕様）
+
+## 処理の流れ
+
+ワークフローは以下のステップを自動実行します：
+
+1. Issueの内容を解析
+2. 🚀 処理開始のReactionを追加
+3. 画像をダウンロードして検証（PNG形式チェック）
+4. カスタムモデルデータをリソースパックに追加
+5. プレビュー画像（256×256）を生成
+6. Pull Requestを自動作成
+7. Issueに結果をコメント（成功時は✅、失敗時は❌）
+
+すべての処理はRust製のCLIツール（`processor`）によって実行され、高速かつ安全に動作します。

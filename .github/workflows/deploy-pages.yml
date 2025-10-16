@@ -22,14 +22,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Get all history to find merged PRs
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Get latest merged PR
         id: latest_pr
         uses: actions/github-script@v7
         with:
           script: |
-            // Get recent commits on main branch
             const commits = await github.rest.repos.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -37,7 +39,6 @@ jobs:
               per_page: 50
             });
 
-            // Find first commit that has an associated merged PR
             for (const commit of commits.data) {
               const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
                 owner: context.repo.owner,
@@ -45,7 +46,6 @@ jobs:
                 commit_sha: commit.sha
               });
 
-              // Find merged PR
               const mergedPR = prs.data.find(pr => pr.merged_at !== null);
               if (mergedPR) {
                 core.setOutput('pr_number', mergedPR.number);
@@ -56,38 +56,40 @@ jobs:
               }
             }
 
-            // No merged PR found
             core.setOutput('pr_number', '');
             core.setOutput('pr_title', '');
             core.setOutput('pr_url', '');
             console.log('No merged PR found');
 
+      - name: Build Rust CLI tool
+        run: cargo build --release
+
+      - name: Generate gallery data
+        id: gallery
+        run: |
+          ./target/release/processor generate-gallery -o models.json
+          MODEL_COUNT=$(jq '.count' models.json)
+          echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
+
       - name: Create resource pack
         id: pack
         run: |
-          # リソースパックをzip化
           zip -r OfroPack.zip assets/ pack.mcmeta pack.png
-
-          # SHA256ハッシュ計算
           SHA1=$(sha1sum OfroPack.zip | awk '{print $1}')
           echo "sha1=$SHA1" >> $GITHUB_OUTPUT
-
-          # ファイルサイズ取得
           SIZE=$(stat -f%z OfroPack.zip 2>/dev/null || stat -c%s OfroPack.zip)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
-
           echo "Resource pack created: $SIZE bytes, SHA1: $SHA1"
 
-      - name: Create public directory
+      - name: Prepare public directory
         run: |
-          mkdir -p public
+          mkdir -p public/preview
           mv OfroPack.zip public/
+          mv models.json public/
 
-          # hash.txt作成
           echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
 
-          # メタデータJSON作成
-          cat > public/metadata.json << EOF
+          cat > public/metadata.json << 'JSONEOF'
           {
             "version": "$(date +%Y%m%d-%H%M%S)",
             "sha1": "${{ steps.pack.outputs.sha1 }}",
@@ -101,9 +103,29 @@ jobs:
               "url": "${{ steps.latest_pr.outputs.pr_url }}"
             }
           }
-          EOF
+          JSONEOF
 
-          cp index.html public/
+          cp index.html gallery.html public/
+
+          # Copy preview images
+          if [ -d "preview" ]; then
+            cp -r preview/* public/preview/ 2>/dev/null || true
+          fi
+
+          # Copy textures as fallback
+          for texture in assets/minecraft/textures/item/*.png; do
+            if [ -f "$texture" ]; then
+              filename=$(basename "$texture")
+              if [ ! -f "public/preview/$filename" ]; then
+                cp "$texture" "public/preview/$filename"
+              fi
+            fi
+          done
+
+          # Copy assets directory for texture references
+          cp -r assets public/
+
+          echo "✓ Public directory prepared"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -124,8 +146,10 @@ jobs:
           echo "**リソースパック URL:**" >> $GITHUB_STEP_SUMMARY
           echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**ハッシュ URL:**" >> $GITHUB_STEP_SUMMARY
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/hash.txt" >> $GITHUB_STEP_SUMMARY
+          echo "**ギャラリー URL:**" >> $GITHUB_STEP_SUMMARY
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/gallery.html" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**モデル数:** ${{ steps.gallery.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**SHA1:** \`${{ steps.pack.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
