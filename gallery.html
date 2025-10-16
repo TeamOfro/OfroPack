@@ -234,17 +234,18 @@
       position: absolute;
       right: 0;
       opacity: 0;
-      transition: opacity 0.3s;
     }
 
     .model-name:hover::after {
-      opacity: 0.7;
+      opacity: 1;
+      transition: opacity 0.3s;
     }
 
     .model-name.copied::after {
       content: '✓';
       opacity: 1;
       color: var(--primary-color);
+      opacity: 1;
     }
 
     .model-meta {
@@ -279,6 +280,71 @@
     .error {
       color: #f44336;
     }
+
+    .filter-group select {
+      background: #1a1d21;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: var(--text-color);
+      font-family: var(--font-family-sans);
+      min-width: 180px;
+      transition: border-color 0.3s;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23e0e0e0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 10px;
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .filter-panel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-group input[type="text"],
+      .filter-group select {
+        width: 100%;
+      }
+      .stats {
+        text-align: left;
+        margin-top: 10px;
+      }
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 15px;
+      }
+    }
+
+    .model-texture-link {
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -304,9 +370,18 @@
     <div class="filter-panel">
       <div class="filter-group">
         <label for="filter-material">マテリアル:</label>
-        <input type="text" id="filter-material" placeholder="例: diamond_axe">
+        <select id="filter-material"></select>
         <label for="filter-id">CustomModelData ID:</label>
         <input type="text" id="filter-id" placeholder="例: sennsyuuraku">
+      </div>
+      <div class="filter-group">
+        <label for="sort-order">並び順:</label>
+        <select id="sort-order">
+          <option value="date_desc">追加日が新しい順</option>
+          <option value="date_asc">追加日が古い順</option>
+          <option value="name_asc">名前 (A-Z)</option>
+          <option value="name_desc">名前 (Z-A)</option>
+        </select>
       </div>
       <div class="stats" id="stats">読み込み中...</div>
     </div>
@@ -316,119 +391,230 @@
     </div>
   </div>
 
-  <script>
-    let allModels = [];
+    <script>
+      let allModels = [];
 
-    function copyToClipboard(text, element) {
-      navigator.clipboard.writeText(text).then(() => {
-        element.classList.add('copied');
-        setTimeout(() => {
-          element.classList.remove('copied');
-        }, 1500);
-      });
-    }
-
-    function filterModels() {
-      const materialFilter = document.getElementById('filter-material').value.toLowerCase().trim();
-      const idFilter = document.getElementById('filter-id').value.toLowerCase().trim();
-
-      const filtered = allModels.filter(model => {
-        const matchesMaterial = !materialFilter ||
-          model.materials.some(m => m.toLowerCase().includes(materialFilter));
-        const matchesId = !idFilter ||
-          model.name.toLowerCase().includes(idFilter);
-        return matchesMaterial && matchesId;
-      });
-
-      renderModels(filtered);
-
-      const total = allModels.length;
-      const showing = filtered.length;
-      document.getElementById('stats').textContent =
-        showing === total
-          ? `全 ${total} 個のカスタムモデル`
-          : `${showing} / ${total} 個のカスタムモデルを表示中`;
-    }
-
-    function renderModels(models) {
-      const gallery = document.getElementById('gallery');
-      gallery.innerHTML = '';
-
-      if (models.length === 0) {
-        gallery.innerHTML = '<div class="error">条件に一致するカスタムモデルが見つかりませんでした</div>';
-        return;
+      function copyToClipboard(text, element) {
+        navigator.clipboard.writeText(text).then(() => {
+          element.classList.add('copied');
+          setTimeout(() => {
+            element.classList.remove('copied');
+          }, 1500);
+        });
       }
 
-      models.forEach(model => {
-        const card = document.createElement('div');
-        card.className = 'model-card';
+      function updateURL() {
+        const material = document.getElementById('filter-material').value;
+        const id = document.getElementById('filter-id').value;
+        const sort = document.getElementById('sort-order').value;
 
-        const addedDate = new Date(model.added_date);
-        const dateStr = addedDate.toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
+        const params = new URLSearchParams(window.location.search);
+        if (material) {
+          params.set('material', material);
+        } else {
+          params.delete('material');
+        }
+        if (id) {
+          params.set('id', id);
+        } else {
+          params.delete('id');
+        }
+        if (sort && sort !== 'date_desc') {
+          params.set('sort', sort);
+        } else {
+          params.delete('sort');
+        }
 
-        card.innerHTML = `
-          <div class="model-texture">
-            <img src="${model.texture_url}" alt="${model.name}">
-          </div>
-          <div class="model-info">
-            <div class="model-name" data-id="${model.name}">${model.name}</div>
-            <div class="model-meta">
-              📅 ${dateStr}
-              ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
-            </div>
-            <div class="materials">
-              ${model.materials.map(m =>
-                `<span class="material-tag">${m}</span>`
-              ).join('')}
-            </div>
-          </div>
-        `;
+        const queryString = params.toString();
+        const newUrl = queryString
+          ? `${window.location.pathname}?${queryString}`
+          : window.location.pathname;
 
-        // Add click event for copying ID
-        const nameElement = card.querySelector('.model-name');
-        nameElement.addEventListener('click', () => {
-          copyToClipboard(model.name, nameElement);
-        });
-
-        gallery.appendChild(card);
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set GitHub repository link
-      const repoUrl = window.location.pathname.match(/\/([^\/]+)\/?$/)?.[1] || 'OfroPack';
-      const owner = window.location.hostname.split('.')[0];
-      const githubLink = document.getElementById('github-link');
-      if (githubLink) {
-        githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+        window.history.replaceState({path: newUrl}, '', newUrl);
       }
 
-      fetch('models.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('モデルデータの読み込みに失敗しました');
+      function filterModels() {
+        const materialFilter = document.getElementById('filter-material').value.toLowerCase();
+        const idFilter = document.getElementById('filter-id').value.toLowerCase().trim();
+
+        let filtered = allModels.filter(model => {
+          const matchesMaterial = !materialFilter ||
+            model.materials.some(m => m.toLowerCase() === materialFilter);
+          const matchesId = !idFilter ||
+            model.name.toLowerCase().includes(idFilter);
+          return matchesMaterial && matchesId;
+        });
+
+        const sortOrder = document.getElementById('sort-order').value;
+        filtered.sort((a, b) => {
+          switch (sortOrder) {
+            case 'date_asc':
+              return new Date(a.added_date) - new Date(b.added_date);
+            case 'name_asc':
+              return a.name.localeCompare(b.name);
+            case 'name_desc':
+              return b.name.localeCompare(a.name);
+            case 'date_desc':
+            default:
+              return new Date(b.added_date) - new Date(a.added_date);
           }
-          return response.json();
-        })
-        .then(data => {
-          allModels = data.models.sort((a, b) => new Date(b.added_date) - new Date(a.added_date));
-          filterModels();
-
-          // Setup filter event listeners
-          document.getElementById('filter-material').addEventListener('input', filterModels);
-          document.getElementById('filter-id').addEventListener('input', filterModels);
-        })
-        .catch(error => {
-          console.error('Error loading models:', error);
-          document.getElementById('gallery').innerHTML =
-            `<div class="error">エラー: ${error.message}</div>`;
-          document.getElementById('stats').textContent = '';
         });
-    });
-  </script>
-</body>
+
+        renderModels(filtered);
+        updateURL();
+
+        const total = allModels.length;
+        const showing = filtered.length;
+        document.getElementById('stats').textContent =
+          showing === total
+            ? `全 ${total} 個のカスタムモデル`
+            : `${showing} / ${total} 個のカスタムモデルを表示中`;
+      }
+
+      function renderModels(models) {
+        const gallery = document.getElementById('gallery');
+        gallery.innerHTML = '';
+
+        if (models.length === 0) {
+          gallery.innerHTML = '<div class="error">条件に一致するカスタムモデルが見つかりませんでした</div>';
+          return;
+        }
+
+        models.forEach(model => {
+          const card = document.createElement('div');
+          card.className = 'model-card';
+
+          const addedDate = new Date(model.added_date);
+          const dateStr = addedDate.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+
+                  card.innerHTML = `
+                    <a href="model.html?id=${model.name}" class="model-texture-link">
+                      <div class="model-texture">
+                        <img data-src="${model.texture_url}" alt="${model.name}" class="lazy-load">
+                      </div>
+                    </a>            <div class="model-info">
+              <div class="model-name" data-id="${model.name}">${model.name}</div>
+              <div class="model-meta">
+                📅 ${dateStr}
+                ${model.author !== 'Unknown' ? `<br>👤 ${model.author}` : ''}
+              </div>
+              <div class="materials">
+                ${model.materials.map(m =>
+                  `<span class="material-tag">${m}</span>`
+                ).join('')}
+              </div>
+            </div>
+          `;
+
+          // Add click event for copying ID
+          const nameElement = card.querySelector('.model-name');
+          nameElement.addEventListener('click', () => {
+            copyToClipboard(model.name, nameElement);
+          });
+
+          gallery.appendChild(card);
+        });
+
+        setupLazyLoading();
+      }
+
+      function setupLazyLoading() {
+        const lazyImages = document.querySelectorAll('img.lazy-load');
+
+        if ('IntersectionObserver' in window) {
+          const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const image = entry.target;
+                image.src = image.dataset.src;
+                image.classList.remove('lazy-load');
+                imageObserver.unobserve(image);
+              }
+            });
+          });
+
+          lazyImages.forEach(image => {
+            imageObserver.observe(image);
+          });
+        } else {
+          // Fallback for browsers that don't support IntersectionObserver
+          lazyImages.forEach(image => {
+            image.src = image.dataset.src;
+            image.classList.remove('lazy-load');
+          });
+        }
+      }
+
+      function populateMaterialFilter(models) {
+        const materials = new Set();
+        models.forEach(model => {
+          model.materials.forEach(m => materials.add(m));
+        });
+
+        const select = document.getElementById('filter-material');
+        select.innerHTML = '<option value="">すべてのマテリアル</option>';
+
+        const sortedMaterials = [...materials].sort();
+        sortedMaterials.forEach(material => {
+          const option = document.createElement('option');
+          option.value = material;
+          option.textContent = material;
+          select.appendChild(option);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Set GitHub repository link
+        const owner = window.location.hostname.split('.')[0];
+        const pathParts = window.location.pathname.split('/').filter(part => part.length > 0);
+        const repoUrl = pathParts[0] || 'OfroPack';
+        const githubLink = document.getElementById('github-link');
+        if (githubLink) {
+          githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+        }
+
+        const materialFilterEl = document.getElementById('filter-material');
+        const idFilterEl = document.getElementById('filter-id');
+        const sortOrderEl = document.getElementById('sort-order');
+
+        fetch('models.json')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('モデルデータの読み込みに失敗しました');
+            }
+            return response.json();
+          })
+          .then(data => {
+            allModels = data.models; // Remove initial sort
+            populateMaterialFilter(allModels);
+
+            // Read initial state from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const materialParam = urlParams.get('material');
+            const idParam = urlParams.get('id');
+            const sortParam = urlParams.get('sort');
+
+            if (materialParam) materialFilterEl.value = materialParam;
+            if (idParam) idFilterEl.value = idParam;
+            if (sortParam) sortOrderEl.value = sortParam;
+
+            filterModels();
+
+            // Setup filter event listeners
+            materialFilterEl.addEventListener('input', filterModels);
+            idFilterEl.addEventListener('input', filterModels);
+            sortOrderEl.addEventListener('input', filterModels);
+          })
+          .catch(error => {
+            console.error('Error loading models:', error);
+            document.getElementById('gallery').innerHTML =
+              `<div class="error">エラー: ${error.message}<br>モデルデータの読み込みに失敗しました。ファイルが生成されていないか、内容が不正な可能性があります。</div>`;
+            document.getElementById('stats').textContent = '読み込みエラー';
+          });
+      });
+    </script></body>
 </html>
