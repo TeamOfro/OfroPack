@@ -251,10 +251,12 @@ mod tests {
         // Second add should fail
         let result = processor.add_with_texture(&materials, &image_path);
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("カスタムモデルが既に存在します"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("カスタムモデルが既に存在します")
+        );
 
         // Cleanup
         fs::remove_file(image_path).ok();
@@ -297,10 +299,12 @@ mod tests {
         let result = processor.extend_materials(&materials);
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("カスタムモデルが見つかりません"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("カスタムモデルが見つかりません")
+        );
     }
 
     #[test]
@@ -313,9 +317,7 @@ mod tests {
         create_test_image(&image_path);
 
         let materials = vec!["diamond_sword".to_string()];
-        processor
-            .add_with_texture(&materials, &image_path)
-            .unwrap();
+        processor.add_with_texture(&materials, &image_path).unwrap();
 
         // Try to add same material again
         let result = processor.add_material_to_item("diamond_sword");

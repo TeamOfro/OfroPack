@@ -15,11 +15,12 @@ impl IssueParser {
     /// Parse issue body in Markdown format
     pub fn parse(body: &str) -> Result<ParsedIssue> {
         // Parse materials (required)
-        let materials =
-            Self::extract_field(body, "Materials").context("Materials field not found in issue")?;
+        let materials = Self::extract_field(body, "Materials")
+            .or_else(|| Self::extract_field(body, "マテリアル"))
+            .context("マテリアルフィールドが見つかりません")?;
 
         if materials == "_No response_" || materials.is_empty() {
-            bail!("Materials field is required");
+            bail!("マテリアルは必須項目です");
         }
 
         // Parse as comma-separated list
@@ -30,15 +31,16 @@ impl IssueParser {
             .collect();
 
         if materials.is_empty() {
-            bail!("At least one material is required");
+            bail!("少なくとも1つのマテリアルを指定してください");
         }
 
         // Parse custom model data (required)
         let custom_model_data = Self::extract_field(body, "Custom Model Data")
-            .context("Custom Model Data field not found in issue")?;
+            .or_else(|| Self::extract_field(body, "カスタムモデルデータ名"))
+            .context("カスタムモデルデータ名フィールドが見つかりません")?;
 
         if custom_model_data == "_No response_" || custom_model_data.is_empty() {
-            bail!("Custom Model Data is required");
+            bail!("カスタムモデルデータ名は必須項目です");
         }
 
         // Validate custom_model_data name (alphanumeric, underscore, hyphen only)
@@ -46,22 +48,21 @@ impl IssueParser {
             .chars()
             .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
         {
-            bail!(
-                "Custom Model Data must contain only alphanumeric characters, underscores, and hyphens"
-            );
+            bail!("カスタムモデルデータ名は英数字、アンダースコア、ハイフンのみ使用できます");
         }
 
         // Parse image URL (required)
-        let image_url =
-            Self::extract_field(body, "Image URL").context("Image URL field not found in issue")?;
+        let image_url = Self::extract_field(body, "Image URL")
+            .or_else(|| Self::extract_field(body, "画像URL"))
+            .context("画像URLフィールドが見つかりません")?;
 
         if image_url == "_No response_" || image_url.is_empty() {
-            bail!("Image URL is required");
+            bail!("画像URLは必須項目です");
         }
 
         // Validate URL format
         if !image_url.starts_with("http://") && !image_url.starts_with("https://") {
-            bail!("Image URL must start with http:// or https://");
+            bail!("画像URLはhttp://またはhttps://で始まる必要があります");
         }
 
         Ok(ParsedIssue {

@@ -14,7 +14,7 @@ mod runner;
 use cli::{Cli, Commands, RunnerCommands};
 use gallery::GalleryGenerator;
 use processor::Processor;
-use runner::{GitHubClient, IssueParser, PreviewGenerator};
+use runner::{GitHubClient, IssueParser, IssueProcessor, PreviewGenerator};
 
 fn main() {
     if let Err(err) = run() {
@@ -68,6 +68,30 @@ fn run() -> anyhow::Result<()> {
             generator.generate()?;
         }
         Commands::Runner { subcommand } => match subcommand {
+            RunnerCommands::ProcessIssue { issue_number, body } => {
+                let processor = IssueProcessor::new()?;
+                let result = processor.process(*issue_number, body)?;
+
+                // Output for GitHub Actions (preview_url, custom_model_data)
+                println!("PREVIEW_URL={}", result.preview_url);
+                println!("CUSTOM_MODEL_DATA={}", result.custom_model_data);
+            }
+            RunnerCommands::PostSuccess {
+                issue_number,
+                pr_number,
+                preview_url,
+            } => {
+                let processor = IssueProcessor::new()?;
+                processor.post_success(*issue_number, *pr_number, preview_url)?;
+            }
+            RunnerCommands::PostFailure {
+                issue_number,
+                error_message,
+                workflow_url,
+            } => {
+                let processor = IssueProcessor::new()?;
+                processor.post_failure(*issue_number, error_message, workflow_url)?;
+            }
             RunnerCommands::ParseIssue { body } => {
                 let parsed = IssueParser::parse(body)?;
                 println!("{}", IssueParser::output_github_actions(&parsed));

@@ -1,19 +1,25 @@
 name: custom-model
-description: Request to add a custom model data
-title: "[Custom Model] "
+description: カスタムモデルデータの追加リクエスト
+title: "[カスタムモデル] "
 labels: ["custom-model"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Request Custom Model Data
-        Fill in the details below to automatically add custom model data to the resource pack.
+        ## カスタムモデルデータのリクエスト
+        以下のフォームに入力すると、自動的にリソースパックにカスタムモデルが追加されます。
+        
+        **注意事項:**
+        - 画像URLは直接アクセス可能な公開URLを指定してください
+        - PNG形式の画像のみ対応しています
+        - エラーが発生した場合、このIssueは自動的にクローズされます
+        - Issueの編集では再実行されません。エラーの場合は新しいIssueを作成してください
   
   - type: input
     id: materials
     attributes:
-      label: Materials
-      description: "Comma-separated list of materials (e.g., diamond_axe,iron_sword,golden_hoe)"
+      label: マテリアル
+      description: "カンマ区切りのマテリアルリスト（例: diamond_axe,iron_sword,golden_hoe）"
       placeholder: "diamond_axe,iron_sword"
     validations:
       required: true
@@ -21,8 +27,8 @@ body:
   - type: input
     id: custom_model_data
     attributes:
-      label: Custom Model Data
-      description: "Name for the custom model data (lowercase, numbers, underscores only)"
+      label: カスタムモデルデータ名
+      description: "英小文字、数字、アンダースコアのみ使用可能（例: my_custom_model）"
       placeholder: "my_custom_model"
     validations:
       required: true
@@ -30,8 +36,8 @@ body:
   - type: input
     id: image_url
     attributes:
-      label: Image URL
-      description: "Direct URL to the PNG image file"
+      label: 画像URL
+      description: "PNG画像ファイルの直接URL（Imgur、Discord添付など）"
       placeholder: "https://example.com/my_texture.png"
     validations:
       required: true
@@ -39,7 +45,7 @@ body:
   - type: textarea
     id: notes
     attributes:
-      label: Additional Notes
-      description: "Any additional information about this custom model"
+      label: 補足事項
+      description: "このカスタムモデルに関する追加情報（任意）"
     validations:
       required: false

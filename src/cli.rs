@@ -51,14 +51,55 @@ pub enum Commands {
     },
 }
 
-/// GitHub Actions runner subcommands
+/// GitHub Actions runner utilities
 #[derive(Subcommand, Debug)]
 pub enum RunnerCommands {
-    /// Parse issue body and output GitHub Actions format
+    /// Issue全体を処理（ダウンロード、検証、モデル追加、プレビュー生成）
+    ProcessIssue {
+        /// Issue番号
+        #[arg(long)]
+        issue_number: u64,
+
+        /// IssueのBody（Markdown形式）
+        #[arg(long)]
+        body: String,
+    },
+
+    /// Issue Bodyを解析してGitHub Actions形式で出力
     ParseIssue {
         /// Issue body text (Markdown format)
         #[arg(long)]
         body: String,
+    },
+
+    /// 成功コメントを投稿
+    PostSuccess {
+        /// Issue番号
+        #[arg(long)]
+        issue_number: u64,
+
+        /// Pull Request番号
+        #[arg(long)]
+        pr_number: u64,
+
+        /// プレビュー画像URL
+        #[arg(long)]
+        preview_url: String,
+    },
+
+    /// 失敗コメントを投稿してIssueをクローズ
+    PostFailure {
+        /// Issue番号
+        #[arg(long)]
+        issue_number: u64,
+
+        /// エラーメッセージ
+        #[arg(long)]
+        error_message: String,
+
+        /// ワークフローURL
+        #[arg(long)]
+        workflow_url: String,
     },
 
     /// Post a comment to an issue
@@ -163,14 +204,35 @@ impl Cli {
                 // No validation needed
             }
             Commands::Runner { subcommand } => match subcommand {
+                RunnerCommands::ProcessIssue { body, .. } => {
+                    if body.is_empty() {
+                        return Err(anyhow::anyhow!("Issue bodyは必須です"));
+                    }
+                }
+                RunnerCommands::PostSuccess { preview_url, .. } => {
+                    if preview_url.is_empty() {
+                        return Err(anyhow::anyhow!("プレビューURLは必須です"));
+                    }
+                }
+                RunnerCommands::PostFailure {
+                    error_message,
+                    workflow_url,
+                    ..
+                } => {
+                    if error_message.is_empty() || workflow_url.is_empty() {
+                        return Err(anyhow::anyhow!(
+                            "エラーメッセージとワークフローURLは必須です"
+                        ));
+                    }
+                }
                 RunnerCommands::ParseIssue { body } => {
                     if body.is_empty() {
-                        return Err(anyhow::anyhow!("Issue body is required"));
+                        return Err(anyhow::anyhow!("Issue bodyは必須です"));
                     }
                 }
                 RunnerCommands::Comment { body, .. } => {
                     if body.is_empty() {
-                        return Err(anyhow::anyhow!("Comment body is required"));
+                        return Err(anyhow::anyhow!("コメント本文は必須です"));
                     }
                 }
                 RunnerCommands::React { reaction, .. } => {
@@ -179,7 +241,7 @@ impl Cli {
                     ];
                     if !valid_reactions.contains(&reaction.as_str()) {
                         return Err(anyhow::anyhow!(
-                            "Invalid reaction. Valid reactions: {}",
+                            "無効なReactionです。有効なReaction: {}",
                             valid_reactions.join(", ")
                         ));
                     }
@@ -190,7 +252,7 @@ impl Cli {
                 RunnerCommands::GeneratePreview { source, .. } => {
                     if !source.exists() {
                         return Err(anyhow::anyhow!(
-                            "Source texture not found: {}",
+                            "ソーステクスチャが見つかりません: {}",
                             source.display()
                         ));
                     }
