@@ -107,7 +107,7 @@ jobs:
           }
           JSONEOF
 
-          cp index.html gallery.html public/
+          cp index.html gallery.html model.html public/
 
           # Copy preview images
           if [ -d "preview" ]; then
