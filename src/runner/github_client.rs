@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// GitHub API client for Actions
 pub struct GitHubClient {
@@ -23,12 +23,6 @@ struct ReactionRequest {
 #[derive(Debug, Serialize)]
 struct IssueStateRequest {
     state: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct ApiResponse {
-    #[allow(dead_code)]
-    id: Option<u64>,
 }
 
 impl GitHubClient {
