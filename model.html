@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>モデル詳細 - OfroPack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #1a1d21;
+      --card-bg-color: #2c313a;
+      --primary-color: #4CAF50;
+      --primary-hover-color: #5cb85c;
+      --text-color: #e0e0e0;
+      --muted-text-color: #a0a0a0;
+      --border-color: #373c47;
+      --border-radius: 8px;
+      --font-family-sans: 'Noto Sans JP', sans-serif;
+      --font-family-mono: 'Roboto Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font-family-sans);
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg-color);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 30px;
+    }
+
+    .header-title h1 {
+      color: var(--primary-color);
+      font-size: 2.2em;
+      margin-bottom: 5px;
+      font-family: var(--font-family-mono);
+    }
+
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 1px solid var(--primary-color);
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .nav a:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .model-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .model-image-container {
+      background: #1a1d21;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .model-image-container img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+
+    .model-info p {
+      margin-bottom: 10px;
+    }
+
+    .model-meta h2 {
+      font-size: 1.5em;
+      color: var(--muted-text-color);
+      margin-bottom: 20px;
+    }
+
+    .materials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .material-tag {
+      background: var(--border-color);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--text-color);
+      font-family: var(--font-family-mono);
+    }
+
+    .give-command {
+      background: #1a1d21;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      margin-top: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .give-command h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: var(--muted-text-color);
+    }
+
+    .copyable-field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-color);
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-bottom: 8px;
+    }
+
+    .give-command .copyable-field:last-child {
+      margin-bottom: 0;
+    }
+
+    .copyable-field code {
+      font-family: var(--font-family-mono);
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .copy-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 7px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .model-details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="container">
+    <div class="header">
+      <div class="header-title">
+        <h1 id="model-name">読み込み中...</h1>
+      </div>
+      <div class="nav">
+        <a href="gallery.html">← ギャラリーに戻る</a>
+      </div>
+    </div>
+    <div id="model-content">
+      <!-- Content will be injected by JS -->
+    </div>
+  </div>
+
+  <script>
+    function showCopyFeedback(button) {
+      const originalText = button.textContent;
+      button.textContent = '✓ コピー完了';
+      button.style.background = '#3a8f3e';
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = '';
+      }, 2000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const modelNameTitle = document.getElementById('model-name');
+      const modelContent = document.getElementById('model-content');
+
+      const params = new URLSearchParams(window.location.search);
+      const modelId = params.get('id');
+
+      if (!modelId) {
+        modelNameTitle.textContent = 'エラー';
+        modelContent.innerHTML = '<p>モデルIDが指定されていません。</p>';
+        return;
+      }
+
+      fetch('models.json')
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          const model = data.models.find(m => m.name === modelId);
+
+          if (!model) {
+            modelNameTitle.textContent = 'エラー';
+            modelContent.innerHTML = `<p>モデル '${modelId}' が見つかりませんでした。</p>`;
+            return;
+          }
+
+          modelNameTitle.textContent = model.name;
+          document.title = `${model.name} - OfroPack`;
+
+          const addedDate = new Date(model.added_date).toLocaleDateString('ja-JP', {year: 'numeric', month: 'short', day: 'numeric'});
+
+          modelContent.innerHTML = `
+            <div class="model-details">
+              <div class="model-image-container">
+                <img src="${model.texture_url}" alt="${model.name}">
+              </div>
+              <div class="model-info">
+                <div class="model-meta">
+                  <h2>詳細</h2>
+                  <p><strong>📅 追加日:</strong> ${addedDate}</p>
+                  <p><strong>👤 作者:</strong> ${model.author}</p>
+                  <p><strong>📦 対応マテリアル:</strong></p>
+                  <div class="materials">
+                    ${model.materials.map(m => `<span class="material-tag">${m}</span>`).join('')}
+                  </div>
+                </div>
+                <div class="give-command">
+                    <h3>/give コマンド</h3>
+                    ${model.materials.map(material => {
+            const command = `/give @s ${material}[custom_model_data={strings:['${model.name}']}]`;
+            return `
+                        <div class="copyable-field">
+                            <code data-copy="${command}">/give @s ${material}[...]</code>
+                            <button class="copy-btn">コピー</button>
+                        </div>
+                        `;
+          }).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+
+          const copyFields = modelContent.querySelectorAll('.copyable-field');
+          copyFields.forEach(field => {
+            const copyBtn = field.querySelector('.copy-btn');
+            const commandElement = field.querySelector('code');
+            if (copyBtn && commandElement) {
+              copyBtn.addEventListener('click', () => {
+                const commandToCopy = commandElement.getAttribute('data-copy');
+                navigator.clipboard.writeText(commandToCopy).then(() => {
+                  showCopyFeedback(copyBtn);
+                });
+              });
+            }
+          });
+        })
+        .catch(err => {
+          console.error("Failed to load model details:", err);
+          modelNameTitle.textContent = 'エラー';
+          modelContent.innerHTML = '<p>モデルデータの読み込みに失敗しました。</p>';
+        });
+    });
+  </script>
+</body>
+
+</html>

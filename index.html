@@ -213,6 +213,19 @@
       font-size: 0.85em;
     }
 
+    @media (max-width: 600px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        margin: 10px;
+        padding: 0;
+      }
+      .container {
+        padding: 15px;
+      }
+    }
+
   </style>
 </head>
 
@@ -280,11 +293,13 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Set GitHub repository link
-      const repoUrl = window.location.pathname.match(/\/([^\/]+)\/?$/)?.[1] || 'OfroPack';
-      const owner = window.location.hostname.split('.')[0];
-      const githubLink = document.getElementById('github-link');
-      githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+            // Set GitHub repository link
+            const owner = window.location.hostname.split('.')[0];
+            const pathParts = window.location.pathname.split('/').filter(part => part.length > 0);
+            const repoUrl = pathParts[0] || 'OfroPack';
+            const githubLink = document.getElementById('github-link');
+            githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+      
       
       fetch('metadata.json')
         .then(response => {
@@ -310,7 +325,13 @@
         })
         .catch(e => {
           console.error('Failed to load metadata:', e);
-          const errorText = '取得失敗';
+          const subtitle = document.querySelector('.subtitle');
+          if (subtitle) {
+            subtitle.textContent = `エラー: ${e.message}。データの読み込みに失敗しました。`;
+            subtitle.style.color = '#f44336';
+          }
+          
+          const errorText = 'N/A';
           document.getElementById('sha1').textContent = errorText;
           document.getElementById('size').textContent = errorText;
           document.getElementById('updated').textContent = errorText;
@@ -326,16 +347,27 @@
           if (targetElement) {
             navigator.clipboard.writeText(targetElement.textContent)
               .then(() => {
-                button.textContent = 'コピー完了!';
+                const originalText = button.textContent;
+                button.textContent = '✓ コピー完了';
+                button.style.background = '#3a8f3e';
+                button.style.borderColor = '#3a8f3e';
+
                 setTimeout(() => {
-                  button.textContent = 'コピー';
+                  button.textContent = originalText;
+                  button.style.background = '';
+                  button.style.borderColor = '';
                 }, 2000);
               })
               .catch(err => {
                 console.error('Copy failed:', err);
-                button.textContent = '失敗';
+                const originalText = button.textContent;
+                button.textContent = '✗ 失敗';
+                button.style.background = '#c9302c';
+                button.style.borderColor = '#c9302c';
                  setTimeout(() => {
-                  button.textContent = 'コピー';
+                  button.textContent = originalText;
+                  button.style.background = '';
+                  button.style.borderColor = '';
                 }, 2000);
               });
           }
