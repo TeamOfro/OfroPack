@@ -109,12 +109,15 @@
       transform: translateY(-2px);
     }
     
-    .download-btn:nth-child(2) {
-      background: #2196F3;
+    .download-btn.secondary {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
     }
     
-    .download-btn:nth-child(2):hover {
-      background: #1976D2;
+    .download-btn.secondary:hover {
+      background: var(--primary-color);
+      color: white;
     }
 
     .info-grid {
@@ -228,7 +231,7 @@
 
     <div class="download-btn-container">
       <a href="OfroPack.zip" class="download-btn">⬇️ ダウンロード</a>
-      <a href="gallery.html" class="download-btn" style="background: #2196F3; margin-left: 10px;">🎨 ギャラリー</a>
+      <a href="gallery.html" class="download-btn secondary" style="margin-left: 10px;">🎨 ギャラリー</a>
     </div>
 
     <div class="info-grid">

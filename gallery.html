@@ -15,7 +15,10 @@
       --primary-hover-color: #5cb85c;
       --text-color: #e0e0e0;
       --muted-text-color: #a0a0a0;
+      --border-color: #373c47;
       --border-radius: 8px;
+      --font-family-sans: 'Noto Sans JP', sans-serif;
+      --font-family-mono: 'Roboto Mono', monospace;
     }
 
     * {
@@ -25,32 +28,110 @@
     }
 
     body {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: var(--font-family-sans);
       background: var(--bg-color);
       color: var(--text-color);
       padding: 20px;
       min-height: 100vh;
     }
 
-    .filter-panel {
-      position: sticky;
-      top: 20px;
-      background: var(--card-bg-color);
-      border-radius: var(--border-radius);
-      padding: 20px;
-      margin-bottom: 30px;
+    /* GitHub Navigation */
+    .github-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 80px 80px 0;
+      border-color: transparent var(--primary-color) transparent transparent;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      z-index: 1000;
+    }
+
+    .github-nav:hover {
+      border-color: transparent var(--primary-hover-color) transparent transparent;
+    }
+
+    .github-icon {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      z-index: 1001;
+      pointer-events: none;
+    }
+
+    .github-icon svg {
+      fill: white;
+      width: 100%;
+      height: 100%;
+    }
+
+    .container {
       max-width: 1400px;
-      margin-left: auto;
-      margin-right: auto;
-      z-index: 10;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      margin: 0 auto;
+      background: var(--card-bg-color);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 30px;
+    }
+
+    .header-title h1 {
+      color: var(--primary-color);
+      font-size: 2.2em;
+      margin-bottom: 5px;
+    }
+
+    .header-title .subtitle {
+      color: var(--muted-text-color);
+      font-size: 1em;
+    }
+
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 1px solid var(--primary-color);
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, color 0.3s;
+      white-space: nowrap;
+    }
+
+    .nav a:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .filter-panel {
+      padding-top: 15px;
+      padding-bottom: 15px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
     }
 
     .filter-title {
       font-size: 1.1em;
       font-weight: bold;
-      margin-bottom: 15px;
-      color: var(--primary-color);
+      color: var(--text-color);
     }
 
     .filter-group {
@@ -67,12 +148,13 @@
 
     .filter-group input[type="text"] {
       background: #1a1d21;
-      border: 1px solid #373c47;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       padding: 8px 12px;
       color: var(--text-color);
-      font-family: 'Roboto Mono', monospace;
-      min-width: 200px;
+      font-family: var(--font-family-mono);
+      min-width: 180px;
+      transition: border-color 0.3s;
     }
 
     .filter-group input[type="text"]:focus {
@@ -80,81 +162,31 @@
       border-color: var(--primary-color);
     }
 
-    .filter-group button {
-      background: var(--primary-color);
-      border: none;
-      border-radius: 4px;
-      padding: 8px 16px;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .filter-group button:hover {
-      background: var(--primary-hover-color);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding: 40px 20px;
-      background: var(--card-bg-color);
-      border-radius: var(--border-radius);
-    }
-
-    h1 {
-      color: var(--primary-color);
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      color: var(--muted-text-color);
-      font-size: 1.1em;
-    }
-
-    .nav {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .nav a {
-      color: var(--primary-color);
-      text-decoration: none;
-      padding: 10px 20px;
-      background: var(--card-bg-color);
-      border-radius: var(--border-radius);
-      transition: background-color 0.3s;
-    }
-
-    .nav a:hover {
-      background: #373c47;
-    }
-
     .stats {
-      text-align: center;
-      margin-bottom: 30px;
+      text-align: right;
+      margin-bottom: 20px;
       color: var(--muted-text-color);
+      font-size: 0.9em;
     }
 
     .gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
     }
 
     .model-card {
-      background: var(--card-bg-color);
+      background: #1f2328;
+      border: 1px solid var(--border-color);
       border-radius: var(--border-radius);
       overflow: hidden;
-      transition: transform 0.3s, box-shadow 0.3s;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
     }
 
     .model-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+      border-color: var(--primary-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
 
     .model-texture {
@@ -165,15 +197,13 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .model-texture img {
-      max-width: 80%;
-      max-height: 80%;
       width: 80%;
       height: 80%;
-      object-fit: cover;
-      aspect-ratio: 1 / 1;
+      object-fit: contain;
       image-rendering: pixelated;
       image-rendering: -moz-crisp-edges;
       image-rendering: crisp-edges;
@@ -188,7 +218,7 @@
       font-weight: bold;
       color: var(--primary-color);
       margin-bottom: 10px;
-      font-family: 'Roboto Mono', monospace;
+      font-family: var(--font-family-mono);
       cursor: pointer;
       user-select: none;
       position: relative;
@@ -220,7 +250,7 @@
     .model-meta {
       font-size: 0.9em;
       color: var(--muted-text-color);
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
 
     .materials {
@@ -231,51 +261,59 @@
     }
 
     .material-tag {
-      background: #373c47;
+      background: var(--border-color);
       padding: 4px 10px;
       border-radius: 4px;
       font-size: 0.85em;
       color: var(--text-color);
+      font-family: var(--font-family-mono);
     }
 
-    .loading {
+    .loading, .error {
       text-align: center;
       padding: 60px 20px;
       color: var(--muted-text-color);
+      grid-column: 1 / -1;
     }
 
     .error {
-      text-align: center;
-      padding: 60px 20px;
       color: #f44336;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🎨 カスタムモデルギャラリー</h1>
-    <p class="subtitle">OfroPack に含まれる全てのカスタムモデル</p>
+  <!-- GitHub Navigation -->
+  <a href="#" id="github-link" class="github-nav"></a>
+  <div class="github-icon">
+    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
   </div>
 
-  <div class="nav">
-    <a href="index.html">← ホームに戻る</a>
-  </div>
-
-  <div class="filter-panel">
-    <div class="filter-title">🔍 フィルター</div>
-    <div class="filter-group">
-      <label for="filter-material">マテリアル:</label>
-      <input type="text" id="filter-material" placeholder="例: diamond_axe">
-      <label for="filter-id">CustomModelData ID:</label>
-      <input type="text" id="filter-id" placeholder="例: sennsyuuraku">
-      <button id="reset-filters">クリア</button>
+  <div class="container">
+    <div class="header">
+      <div class="header-title">
+        <h1>🎨 カスタムモデルギャラリー</h1>
+        <p class="subtitle">OfroPack に含まれる全てのカスタムモデル</p>
+      </div>
+      <div class="nav">
+        <a href="index.html">← ホームに戻る</a>
+      </div>
     </div>
-  </div>
 
-  <div class="stats" id="stats">読み込み中...</div>
+    <div class="filter-panel">
+      <div class="filter-group">
+        <label for="filter-material">マテリアル:</label>
+        <input type="text" id="filter-material" placeholder="例: diamond_axe">
+        <label for="filter-id">CustomModelData ID:</label>
+        <input type="text" id="filter-id" placeholder="例: sennsyuuraku">
+      </div>
+      <div class="stats" id="stats">読み込み中...</div>
+    </div>
 
-  <div class="gallery" id="gallery">
-    <div class="loading">カスタムモデルを読み込んでいます...</div>
+    <div class="gallery" id="gallery">
+      <div class="loading">カスタムモデルを読み込んでいます...</div>
+    </div>
   </div>
 
   <script>
@@ -361,6 +399,14 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Set GitHub repository link
+      const repoUrl = window.location.pathname.match(/\/([^\/]+)\/?$/)?.[1] || 'OfroPack';
+      const owner = window.location.hostname.split('.')[0];
+      const githubLink = document.getElementById('github-link');
+      if (githubLink) {
+        githubLink.href = `https://github.com/${owner}/${repoUrl}`;
+      }
+
       fetch('models.json')
         .then(response => {
           if (!response.ok) {
@@ -369,22 +415,18 @@
           return response.json();
         })
         .then(data => {
-          allModels = data.models;
+          allModels = data.models.sort((a, b) => new Date(b.added_date) - new Date(a.added_date));
           filterModels();
 
           // Setup filter event listeners
           document.getElementById('filter-material').addEventListener('input', filterModels);
           document.getElementById('filter-id').addEventListener('input', filterModels);
-          document.getElementById('reset-filters').addEventListener('click', () => {
-            document.getElementById('filter-material').value = '';
-            document.getElementById('filter-id').value = '';
-            filterModels();
-          });
         })
         .catch(error => {
           console.error('Error loading models:', error);
           document.getElementById('gallery').innerHTML =
             `<div class="error">エラー: ${error.message}</div>`;
+          document.getElementById('stats').textContent = '';
         });
     });
   </script>
