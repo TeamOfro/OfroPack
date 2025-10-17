@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Context, Result};
+use image::GenericImageView;
 use serde::{Deserialize, Serialize};
 
 use crate::models::ItemOverride;
@@ -14,6 +15,14 @@ pub struct ModelInfo {
     pub texture_url: String,
     pub added_date: String,
     pub author: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animation: Option<AnimationMetadata>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AnimationMetadata {
+    pub frame_count: u32,
+    pub frametime: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -86,12 +95,16 @@ impl GalleryGenerator {
             // Get git metadata
             let (added_date, author) = self.get_git_metadata(&model_path)?;
 
+            // Check for animation metadata (.mcmeta file)
+            let animation = self.get_animation_metadata(&model_name, textures_dir)?;
+
             models.push(ModelInfo {
                 name: model_name.clone(),
                 materials,
                 texture_url: format!("assets/minecraft/textures/item/{}.png", model_name),
                 added_date,
                 author,
+                animation,
             });
         }
 
@@ -152,6 +165,56 @@ impl GalleryGenerator {
         }
 
         Ok(materials)
+    }
+
+    /// Get animation metadata from .mcmeta file
+    fn get_animation_metadata(
+        &self,
+        model_name: &str,
+        textures_dir: &Path,
+    ) -> Result<Option<AnimationMetadata>> {
+        let mcmeta_path = textures_dir.join(format!("{}.png.mcmeta", model_name));
+
+        if !mcmeta_path.exists() {
+            return Ok(None);
+        }
+
+        #[derive(Deserialize)]
+        struct McMetaFile {
+            animation: McMetaAnimation,
+        }
+
+        #[derive(Deserialize)]
+        struct McMetaAnimation {
+            frametime: u32,
+        }
+
+        let content = fs::read_to_string(&mcmeta_path).context(format!(
+            ".mcmetaファイルの読み込みに失敗: {}",
+            mcmeta_path.display()
+        ))?;
+
+        let mcmeta: McMetaFile = serde_json::from_str(&content).context(format!(
+            ".mcmetaファイルのパースに失敗: {}",
+            mcmeta_path.display()
+        ))?;
+
+        // Get frame count from image dimensions
+        let image_path = textures_dir.join(format!("{}.png", model_name));
+        let frame_count = if let Ok(img) = image::open(&image_path) {
+            let (width, height) = img.dimensions();
+            height / width
+        } else {
+            anyhow::bail!(
+                "アニメーション画像の読み込みに失敗: {}",
+                image_path.display()
+            );
+        };
+
+        Ok(Some(AnimationMetadata {
+            frame_count,
+            frametime: mcmeta.animation.frametime,
+        }))
     }
 
     /// Get git metadata for a file

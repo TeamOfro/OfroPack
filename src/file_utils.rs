@@ -33,7 +33,10 @@ pub fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> anyhow::Result<T>
 /// Path to the created .mcmeta file
 ///
 /// The .mcmeta file will be created next to the texture with ".png.mcmeta" extension
-pub fn create_mcmeta_file(texture_path: &Path, frametime: NonZeroU32) -> anyhow::Result<std::path::PathBuf> {
+pub fn create_mcmeta_file(
+    texture_path: &Path,
+    frametime: NonZeroU32,
+) -> anyhow::Result<std::path::PathBuf> {
     let mcmeta_path = texture_path.with_extension("png.mcmeta");
 
     let mcmeta_content = json!({
@@ -45,8 +48,10 @@ pub fn create_mcmeta_file(texture_path: &Path, frametime: NonZeroU32) -> anyhow:
     let json_string = serde_json::to_string_pretty(&mcmeta_content)
         .context("Failed to serialize .mcmeta JSON")?;
 
-    std::fs::write(&mcmeta_path, json_string)
-        .context(format!("Failed to write .mcmeta file: {}", mcmeta_path.display()))?;
+    std::fs::write(&mcmeta_path, json_string).context(format!(
+        "Failed to write .mcmeta file: {}",
+        mcmeta_path.display()
+    ))?;
 
     Ok(mcmeta_path)
 }

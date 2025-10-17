@@ -43,14 +43,14 @@ impl IssueProcessor {
                 materials,
                 custom_model_data,
                 image_url,
-                frametime,
+                animation,
             } => {
                 println!("  タイプ: Add");
                 println!("  マテリアル: {}", materials.join(", "));
                 println!("  カスタムモデルデータ: {}", custom_model_data);
                 println!("  画像URL: {}", image_url);
-                if let Some(ft) = frametime {
-                    println!("  Frametime: {}", ft.get());
+                if let Some(anim) = &animation {
+                    println!("  Frametime: {}", anim.frametime.get());
                 }
 
                 // Step 3: Download and validate image
@@ -64,7 +64,7 @@ impl IssueProcessor {
                 println!("\n⚙️  カスタムモデルを処理中...");
                 let processor = Processor::new(custom_model_data.clone());
                 processor
-                    .add_with_texture(&materials, &image_file, frametime)
+                    .add_with_texture(&materials, &image_file, animation)
                     .context("カスタムモデルの追加に失敗しました")?;
                 println!("✓ カスタムモデルの追加が完了しました");
 

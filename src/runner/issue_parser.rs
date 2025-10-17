@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
-use std::num::NonZeroU32;
+
+use crate::models::AnimationInfo;
 
 /// Parsed issue data for custom model request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -9,7 +10,7 @@ pub enum ParsedIssueData {
         materials: Vec<String>,
         custom_model_data: String,
         image_url: String,
-        frametime: Option<NonZeroU32>,
+        animation: Option<AnimationInfo>,
     },
     Extend {
         materials: Vec<String>,
@@ -93,7 +94,7 @@ impl IssueParser {
         }
 
         // Parse frametime (optional)
-        let frametime = Self::extract_field(body, "Frametime")
+        let animation = Self::extract_field(body, "Frametime")
             .or_else(|| Self::extract_field(body, "Frametime（アニメーション用・任意）"))
             .and_then(|s| {
                 if s == "_No response_" || s.is_empty() {
@@ -104,7 +105,7 @@ impl IssueParser {
                             // Zero is invalid, ignore it
                             None
                         }
-                        Ok(n) => NonZeroU32::new(n),
+                        Ok(n) => std::num::NonZeroU32::new(n).map(AnimationInfo::new),
                         Err(_) => None,
                     }
                 }
@@ -114,7 +115,7 @@ impl IssueParser {
             materials,
             custom_model_data,
             image_url,
-            frametime,
+            animation,
         })
     }
 
@@ -185,10 +186,11 @@ impl IssueParser {
                 materials,
                 custom_model_data,
                 image_url,
-                frametime,
+                animation,
             } => {
-                let frametime_part = frametime
-                    .map(|ft| format!("\nframetime={}", ft.get()))
+                let frametime_part = animation
+                    .as_ref()
+                    .map(|anim| format!("\nframetime={}", anim.frametime.get()))
                     .unwrap_or_default();
 
                 format!(
@@ -243,12 +245,12 @@ Test note
                 materials,
                 custom_model_data,
                 image_url,
-                frametime,
+                animation,
             } => {
                 assert_eq!(materials, vec!["diamond_axe", "golden_axe"]);
                 assert_eq!(custom_model_data, "test_model");
                 assert_eq!(image_url, "https://example.com/image.png");
-                assert_eq!(frametime, None);
+                assert!(animation.is_none());
             }
             ParsedIssueData::Extend { .. } => panic!("Expected Add variant"),
         }
@@ -277,8 +279,8 @@ https://example.com/animated.png
 
         let result = IssueParser::parse(body).unwrap();
         match result {
-            ParsedIssueData::Add { frametime, .. } => {
-                assert_eq!(frametime.map(|ft| ft.get()), Some(5));
+            ParsedIssueData::Add { animation, .. } => {
+                assert_eq!(animation.map(|anim| anim.frametime.get()), Some(5));
             }
             ParsedIssueData::Extend { .. } => panic!("Expected Add variant"),
         }

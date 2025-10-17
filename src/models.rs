@@ -1,4 +1,25 @@
 use serde::{Deserialize, Serialize};
+use std::num::NonZeroU32;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AnimationInfo {
+    pub frametime: NonZeroU32,
+    pub frame_count: u32,
+}
+
+impl AnimationInfo {
+    pub fn new(frametime: NonZeroU32) -> Self {
+        Self {
+            frametime,
+            frame_count: 0, // Will be set after image validation
+        }
+    }
+
+    pub fn with_frame_count(mut self, frame_count: u32) -> Self {
+        self.frame_count = frame_count;
+        self
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ItemOverride {

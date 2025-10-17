@@ -94,7 +94,10 @@ pub struct ImageInfo {
 impl ImageInfo {
     pub fn size_string(&self) -> String {
         if self.frame_count > 1 {
-            format!("{}x{} ({}フレーム)", self.width, self.height, self.frame_count)
+            format!(
+                "{}x{} ({}フレーム)",
+                self.width, self.height, self.frame_count
+            )
         } else {
             format!("{}x{}", self.width, self.height)
         }
