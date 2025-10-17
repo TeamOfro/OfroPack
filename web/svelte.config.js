@@ -11,7 +11,18 @@ const config = {
 		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-		adapter: adapter()
+		adapter: adapter(),
+		prerender: {
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore 404 errors for files that will be generated/available at runtime
+				if (path.startsWith('/assets/minecraft/textures/') || 
+				    path === '/OfroPack.zip' ||
+				    path === '/hash.txt') {
+					return;
+				}
+				throw new Error(message);
+			}
+		}
 	}
 };
 
