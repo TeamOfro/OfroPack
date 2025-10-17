@@ -171,23 +171,71 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Loading & Error states */
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted-text-color);
+    }
+
+    .loading::after {
+      content: '...';
+      display: inline-block;
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    .error {
+      color: #f44336;
+      padding: 20px;
+      background: rgba(244, 67, 54, 0.1);
+      border-left: 3px solid #f44336;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+
+    /* Accessibility */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus styles */
+    a:focus,
+    button:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
   </style>
 </head>
 
 <body>
-  <div class="container" id="container">
-    <div class="header">
+  <main class="container" id="container" role="main">
+    <header class="header">
       <div class="header-title">
-        <h1 id="model-name">読み込み中...</h1>
+        <h1 id="model-name" aria-live="polite">読み込み中...</h1>
       </div>
-      <div class="nav">
+      <nav class="nav" aria-label="ページナビゲーション">
         <a href="gallery.html">← ギャラリーに戻る</a>
-      </div>
+      </nav>
+    </header>
+    <div id="model-content" aria-live="polite">
+      <div class="loading">モデル詳細を読み込んでいます</div>
     </div>
-    <div id="model-content">
-      <!-- Content will be injected by JS -->
-    </div>
-  </div>
+  </main>
 
   <script>
     function showCopyFeedback(button) {
@@ -209,7 +257,7 @@
 
       if (!modelId) {
         modelNameTitle.textContent = 'エラー';
-        modelContent.innerHTML = '<p>モデルIDが指定されていません。</p>';
+        modelContent.innerHTML = '<div class="error" role="alert"><strong>エラー</strong><br>モデルIDが指定されていません。<br><small>URLにモデルIDパラメータが必要です。</small></div>';
         return;
       }
 
@@ -223,7 +271,7 @@
 
           if (!model) {
             modelNameTitle.textContent = 'エラー';
-            modelContent.innerHTML = `<p>モデル '${modelId}' が見つかりませんでした。</p>`;
+            modelContent.innerHTML = `<div class="error" role="alert"><strong>モデルが見つかりません</strong><br>モデル '${modelId}' は存在しません。<br><small><a href="gallery.html">ギャラリー</a>から他のモデルを探してください。</small></div>`;
             return;
           }
 
@@ -235,13 +283,14 @@
           modelContent.innerHTML = `
             <div class="model-details">
               <div class="model-image-container">
-                <img src="${model.texture_url}" alt="${model.name}">
+                <img src="${model.texture_url}" alt="${model.name}のテクスチャ">
               </div>
               <div class="model-info">
                 <div class="model-meta">
-                  <h2>詳細</h2>
+                  <h2>詳細情報</h2>
                   <p><strong>📅 追加日:</strong> ${addedDate}</p>
-                  <p><strong>👤 作者:</strong> ${model.author}</p>
+                  <p><strong>👤 作者:</strong> <a href="gallery.html?author=${encodeURIComponent(model.author)}" style="color: var(--primary-color); text-decoration: none;">${model.author}</a></p>
+                  <p><strong>🆔 ID:</strong> <code style="background: var(--bg-color); padding: 2px 6px; border-radius: 3px; font-family: var(--font-family-mono);">${model.name}</code></p>
                   <p><strong>📦 対応マテリアル:</strong></p>
                   <div class="materials">
                     ${model.materials.map(m => `<span class="material-tag">${m}</span>`).join('')}
@@ -254,7 +303,7 @@
             return `
                         <div class="copyable-field">
                             <code data-copy="${command}">/give @s ${material}[...]</code>
-                            <button class="copy-btn">コピー</button>
+                            <button class="copy-btn" aria-label="${material}のgiveコマンドをコピー">コピー</button>
                         </div>
                         `;
           }).join('')}
@@ -280,7 +329,7 @@
         .catch(err => {
           console.error("Failed to load model details:", err);
           modelNameTitle.textContent = 'エラー';
-          modelContent.innerHTML = '<p>モデルデータの読み込みに失敗しました。</p>';
+          modelContent.innerHTML = `<div class="error" role="alert"><strong>読み込みエラー</strong><br>${err.message || 'モデルデータの読み込みに失敗しました。'}<br><small>ページを再読み込みしてください。</small></div>`;
         });
     });
   </script>
