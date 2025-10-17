@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use anyhow::Result;
 
 use crate::cmd::{Add, Run};
@@ -47,13 +49,25 @@ impl Run for Add {
             anyhow::bail!("カスタムモデルデータ名は小文字英数字とアンダースコアのみ使用できます");
         }
 
+        // Parse frametime
+        let frametime = self
+            .frametime
+            .and_then(|ft| {
+                if ft == 0 {
+                    eprintln!("⚠️  警告: frametimeは0より大きい値を指定してください。無視されます。");
+                    None
+                } else {
+                    NonZeroU32::new(ft)
+                }
+            });
+
         // Normalize materials
         let normalized_materials: Vec<String> =
             self.materials.iter().map(|m| m.to_lowercase()).collect();
 
         // Process
         let processor = Processor::new(custom_model_data);
-        processor.add_with_texture(&normalized_materials, &self.path_to_image)?;
+        processor.add_with_texture(&normalized_materials, &self.path_to_image, frametime)?;
 
         Ok(())
     }

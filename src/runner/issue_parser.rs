@@ -1,20 +1,20 @@
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
-
-/// Issue type for different operations
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum IssueType {
-    Add,
-    Extend,
-}
+use std::num::NonZeroU32;
 
 /// Parsed issue data for custom model request
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ParsedIssue {
-    pub issue_type: IssueType,
-    pub materials: Vec<String>,
-    pub custom_model_data: String,
-    pub image_url: Option<String>, // None for Extend type
+pub enum ParsedIssueData {
+    Add {
+        materials: Vec<String>,
+        custom_model_data: String,
+        image_url: String,
+        frametime: Option<NonZeroU32>,
+    },
+    Extend {
+        materials: Vec<String>,
+        custom_model_data: String,
+    },
 }
 
 pub struct IssueParser;
@@ -22,7 +22,7 @@ pub struct IssueParser;
 impl IssueParser {
     /// Parse issue body based on labels to detect issue type
     #[allow(dead_code)] // For future use with workflow label-based routing
-    pub fn parse_with_labels(body: &str, labels: &[String]) -> Result<ParsedIssue> {
+    pub fn parse_with_labels(body: &str, labels: &[String]) -> Result<ParsedIssueData> {
         if labels.contains(&"extend-model".to_string()) {
             Self::parse_extend(body)
         } else if labels.contains(&"custom-model".to_string()) {
@@ -35,12 +35,12 @@ impl IssueParser {
     }
 
     /// Parse issue body in Markdown format (legacy, assumes Add type)
-    pub fn parse(body: &str) -> Result<ParsedIssue> {
+    pub fn parse(body: &str) -> Result<ParsedIssueData> {
         Self::parse_add(body)
     }
 
     /// Parse Add type issue
-    fn parse_add(body: &str) -> Result<ParsedIssue> {
+    fn parse_add(body: &str) -> Result<ParsedIssueData> {
         // Parse materials (required)
         let materials = Self::extract_field(body, "Materials")
             .or_else(|| Self::extract_field(body, "マテリアル"))
@@ -92,16 +92,34 @@ impl IssueParser {
             bail!("画像URLはhttp://またはhttps://で始まる必要があります");
         }
 
-        Ok(ParsedIssue {
-            issue_type: IssueType::Add,
+        // Parse frametime (optional)
+        let frametime = Self::extract_field(body, "Frametime")
+            .or_else(|| Self::extract_field(body, "Frametime（アニメーション用・任意）"))
+            .and_then(|s| {
+                if s == "_No response_" || s.is_empty() {
+                    None
+                } else {
+                    match s.parse::<u32>() {
+                        Ok(0) => {
+                            // Zero is invalid, ignore it
+                            None
+                        }
+                        Ok(n) => NonZeroU32::new(n),
+                        Err(_) => None,
+                    }
+                }
+            });
+
+        Ok(ParsedIssueData::Add {
             materials,
             custom_model_data,
-            image_url: Some(image_url),
+            image_url,
+            frametime,
         })
     }
 
     /// Parse Extend type issue
-    fn parse_extend(body: &str) -> Result<ParsedIssue> {
+    fn parse_extend(body: &str) -> Result<ParsedIssueData> {
         // Parse materials (required)
         let materials = Self::extract_field(body, "Materials")
             .or_else(|| Self::extract_field(body, "マテリアル"))
@@ -139,11 +157,9 @@ impl IssueParser {
             bail!("カスタムモデルデータ名は英数字、アンダースコア、ハイフンのみ使用できます");
         }
 
-        Ok(ParsedIssue {
-            issue_type: IssueType::Extend,
+        Ok(ParsedIssueData::Extend {
             materials,
             custom_model_data,
-            image_url: None,
         })
     }
 
@@ -163,23 +179,37 @@ impl IssueParser {
     }
 
     /// Output in GitHub Actions format (key=value)
-    pub fn output_github_actions(parsed: &ParsedIssue) -> String {
-        let image_part = if let Some(url) = &parsed.image_url {
-            format!("\nimage_url={}", url)
-        } else {
-            String::new()
-        };
+    pub fn output_github_actions(parsed: &ParsedIssueData) -> String {
+        match parsed {
+            ParsedIssueData::Add {
+                materials,
+                custom_model_data,
+                image_url,
+                frametime,
+            } => {
+                let frametime_part = frametime
+                    .map(|ft| format!("\nframetime={}", ft.get()))
+                    .unwrap_or_default();
 
-        format!(
-            "issue_type={}\nmaterials={}\ncustom_model_data={}{}",
-            match parsed.issue_type {
-                IssueType::Add => "add",
-                IssueType::Extend => "extend",
-            },
-            parsed.materials.join(","),
-            parsed.custom_model_data,
-            image_part
-        )
+                format!(
+                    "issue_type=add\nmaterials={}\ncustom_model_data={}\nimage_url={}{}",
+                    materials.join(","),
+                    custom_model_data,
+                    image_url,
+                    frametime_part
+                )
+            }
+            ParsedIssueData::Extend {
+                materials,
+                custom_model_data,
+            } => {
+                format!(
+                    "issue_type=extend\nmaterials={}\ncustom_model_data={}",
+                    materials.join(","),
+                    custom_model_data
+                )
+            }
+        }
     }
 }
 
@@ -208,12 +238,50 @@ Test note
 "#;
 
         let result = IssueParser::parse(body).unwrap();
-        assert_eq!(result.materials, vec!["diamond_axe", "golden_axe"]);
-        assert_eq!(result.custom_model_data, "test_model");
-        assert_eq!(
-            result.image_url,
-            Some("https://example.com/image.png".to_string())
-        );
+        match result {
+            ParsedIssueData::Add {
+                materials,
+                custom_model_data,
+                image_url,
+                frametime,
+            } => {
+                assert_eq!(materials, vec!["diamond_axe", "golden_axe"]);
+                assert_eq!(custom_model_data, "test_model");
+                assert_eq!(image_url, "https://example.com/image.png");
+                assert_eq!(frametime, None);
+            }
+            ParsedIssueData::Extend { .. } => panic!("Expected Add variant"),
+        }
+    }
+
+    #[test]
+    fn test_parse_with_frametime() {
+        let body = r#"
+### Materials
+
+diamond_axe
+
+### Custom Model Data
+
+animated_model
+
+### Image URL
+
+https://example.com/animated.png
+
+### Frametime（アニメーション用・任意）
+
+5
+
+"#;
+
+        let result = IssueParser::parse(body).unwrap();
+        match result {
+            ParsedIssueData::Add { frametime, .. } => {
+                assert_eq!(frametime.map(|ft| ft.get()), Some(5));
+            }
+            ParsedIssueData::Extend { .. } => panic!("Expected Add variant"),
+        }
     }
 
     #[test]
@@ -260,12 +328,19 @@ diamond_axe, golden_axe
 ### Custom Model Data
 
 test_model
+
 "#;
 
         let result = IssueParser::parse_extend(body).unwrap();
-        assert_eq!(result.issue_type, IssueType::Extend);
-        assert_eq!(result.materials, vec!["diamond_axe", "golden_axe"]);
-        assert_eq!(result.custom_model_data, "test_model");
-        assert_eq!(result.image_url, None);
+        match result {
+            ParsedIssueData::Extend {
+                materials,
+                custom_model_data,
+            } => {
+                assert_eq!(materials, vec!["diamond_axe", "golden_axe"]);
+                assert_eq!(custom_model_data, "test_model");
+            }
+            ParsedIssueData::Add { .. } => panic!("Expected Extend variant"),
+        }
     }
 }

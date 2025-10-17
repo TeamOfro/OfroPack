@@ -41,7 +41,16 @@ body:
       placeholder: "https://example.com/my_texture.png"
     validations:
       required: true
-  
+
+  - type: input
+    id: frametime
+    attributes:
+      label: Frametime（アニメーション用・任意）
+      description: "アニメーションテクスチャの場合のみ指定。1フレームあたりのtick数（例: 1, 2, 5）。画像は縦に複数フレームを並べた形式にしてください。"
+      placeholder: "1"
+    validations:
+      required: false
+
   - type: textarea
     id: notes
     attributes:

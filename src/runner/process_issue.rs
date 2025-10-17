@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use super::{GitHubClient, ImageDownloader, IssueParser, PreviewGenerator};
 use crate::processor::Processor;
-use crate::runner::issue_parser::IssueType;
+use crate::runner::issue_parser::ParsedIssueData;
 
 /// Orchestrates the entire issue processing workflow
 pub struct IssueProcessor {
@@ -37,30 +37,34 @@ impl IssueProcessor {
         // Step 2: Parse issue body
         println!("\n📝 Issueを解析中...");
         let parsed = IssueParser::parse(issue_body).context("Issueの解析に失敗しました")?;
-        println!("  タイプ: {:?}", parsed.issue_type);
-        println!("  マテリアル: {}", parsed.materials.join(", "));
-        println!("  カスタムモデルデータ: {}", parsed.custom_model_data);
 
-        match parsed.issue_type {
-            IssueType::Add => {
-                let image_url = parsed
-                    .image_url
-                    .as_ref()
-                    .context("Add型IssueにはImage URLが必要です")?;
+        match parsed {
+            ParsedIssueData::Add {
+                materials,
+                custom_model_data,
+                image_url,
+                frametime,
+            } => {
+                println!("  タイプ: Add");
+                println!("  マテリアル: {}", materials.join(", "));
+                println!("  カスタムモデルデータ: {}", custom_model_data);
                 println!("  画像URL: {}", image_url);
+                if let Some(ft) = frametime {
+                    println!("  Frametime: {}", ft.get());
+                }
 
                 // Step 3: Download and validate image
                 println!("\n⬇️  画像をダウンロード中...");
-                let image_file = PathBuf::from(format!("{}.png", parsed.custom_model_data));
+                let image_file = PathBuf::from(format!("{}.png", custom_model_data));
                 self.image_downloader
-                    .download(image_url, &image_file)
+                    .download(&image_url, &image_file)
                     .context("画像のダウンロードに失敗しました")?;
 
                 // Step 4: Process custom model data
                 println!("\n⚙️  カスタムモデルを処理中...");
-                let processor = Processor::new(parsed.custom_model_data.clone());
+                let processor = Processor::new(custom_model_data.clone());
                 processor
-                    .add_with_texture(&parsed.materials, &image_file)
+                    .add_with_texture(&materials, &image_file, frametime)
                     .context("カスタムモデルの追加に失敗しました")?;
                 println!("✓ カスタムモデルの追加が完了しました");
 
@@ -69,7 +73,7 @@ impl IssueProcessor {
                 let preview_generator = PreviewGenerator::new(PathBuf::from("preview"));
                 let texture_path = PathBuf::from(format!(
                     "assets/minecraft/textures/item/{}.png",
-                    parsed.custom_model_data
+                    custom_model_data
                 ));
 
                 if !texture_path.exists() {
@@ -80,7 +84,7 @@ impl IssueProcessor {
                 }
 
                 let preview_path = preview_generator
-                    .generate(&texture_path, &parsed.custom_model_data)
+                    .generate(&texture_path, &custom_model_data)
                     .context("プレビュー画像の生成に失敗しました")?;
 
                 // Get environment variables for URL generation
@@ -103,15 +107,22 @@ impl IssueProcessor {
 
                 Ok(ProcessResult {
                     preview_url: Some(preview_url),
-                    custom_model_data: parsed.custom_model_data,
+                    custom_model_data,
                 })
             }
-            IssueType::Extend => {
+            ParsedIssueData::Extend {
+                materials,
+                custom_model_data,
+            } => {
+                println!("  タイプ: Extend");
+                println!("  マテリアル: {}", materials.join(", "));
+                println!("  カスタムモデルデータ: {}", custom_model_data);
+
                 // Step 3: Extend materials
                 println!("\n⚙️  マテリアルを拡張中...");
-                let processor = Processor::new(parsed.custom_model_data.clone());
+                let processor = Processor::new(custom_model_data.clone());
                 processor
-                    .extend_materials(&parsed.materials)
+                    .extend_materials(&materials)
                     .context("マテリアルの拡張に失敗しました")?;
                 println!("✓ マテリアルの拡張が完了しました");
 
@@ -119,7 +130,7 @@ impl IssueProcessor {
 
                 Ok(ProcessResult {
                     preview_url: None,
-                    custom_model_data: parsed.custom_model_data,
+                    custom_model_data,
                 })
             }
         }

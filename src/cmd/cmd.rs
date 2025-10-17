@@ -25,6 +25,10 @@ pub struct Add {
     #[arg(short, long)]
     pub custom_model_data: Option<String>,
 
+    /// アニメーションのフレームタイム (tick数、アニメーションテクスチャの場合のみ指定)
+    #[arg(short = 'f', long)]
+    pub frametime: Option<u32>,
+
     /// テクスチャ画像ファイルのパス
     pub path_to_image: PathBuf,
 }
