@@ -3,9 +3,9 @@ use std::path::Path;
 use anyhow::Context;
 
 use crate::constants::Paths;
-use crate::file_utils::{create_parent_dir_all, read_json, write_json};
+use crate::file_utils::{create_mcmeta_file, create_parent_dir_all, read_json, write_json};
 use crate::image_validator::validate_image;
-use crate::models::{ItemOverride, ModelFile};
+use crate::models::{AnimationInfo, ItemOverride, ModelFile};
 
 pub struct Processor {
     pub custom_model_data: String,
@@ -17,7 +17,12 @@ impl Processor {
     }
 
     /// Add a new custom model with texture
-    pub fn add_with_texture(&self, materials: &[String], image_path: &Path) -> anyhow::Result<()> {
+    pub fn add_with_texture(
+        &self,
+        materials: &[String],
+        image_path: &Path,
+        animation: Option<AnimationInfo>,
+    ) -> anyhow::Result<()> {
         let model_path = Paths::model_path(&self.custom_model_data);
         let texture_path = Paths::texture_path(&self.custom_model_data);
 
@@ -44,8 +49,12 @@ impl Processor {
 
         // Validate image
         println!("🔍 画像を検証中...");
-        let image_info = validate_image(image_path)?;
+        let allow_animation = animation.is_some();
+        let image_info = validate_image(image_path, allow_animation)?;
         println!("  ✓ 画像サイズ: {}", image_info.size_string());
+
+        // Update animation with frame count if present
+        let animation = animation.map(|anim| anim.with_frame_count(image_info.frame_count));
 
         // Prepare directories
         create_parent_dir_all(&model_path)?;
@@ -67,9 +76,26 @@ impl Processor {
         ))?;
         println!("  ✓ テクスチャ: {}", texture_path.display());
 
+        // Create .mcmeta file if animation is provided
+        if let Some(anim) = &animation {
+            let mcmeta_path = create_mcmeta_file(&texture_path, anim.frametime)?;
+            println!(
+                "  ✓ アニメーション設定: {} (frametime: {})",
+                mcmeta_path.display(),
+                anim.frametime.get()
+            );
+        }
+
+        let animation_note = if animation.is_some() {
+            " (アニメーション)"
+        } else {
+            ""
+        };
+
         println!(
-            "\n✅ カスタムモデル '{}' を作成しました ({} マテリアル)",
+            "\n✅ カスタムモデル '{}'{} を作成しました ({} マテリアル)",
             self.custom_model_data,
+            animation_note,
             materials.len()
         );
 
@@ -217,7 +243,7 @@ mod tests {
         create_test_image(&image_path);
 
         let materials = vec!["diamond_sword".to_string()];
-        let result = processor.add_with_texture(&materials, &image_path);
+        let result = processor.add_with_texture(&materials, &image_path, None);
 
         assert!(result.is_ok());
 
@@ -246,10 +272,12 @@ mod tests {
         let materials = vec!["diamond_sword".to_string()];
 
         // First add should succeed
-        processor.add_with_texture(&materials, &image_path).unwrap();
+        processor
+            .add_with_texture(&materials, &image_path, None)
+            .unwrap();
 
         // Second add should fail
-        let result = processor.add_with_texture(&materials, &image_path);
+        let result = processor.add_with_texture(&materials, &image_path, None);
         assert!(result.is_err());
         assert!(
             result
@@ -273,7 +301,7 @@ mod tests {
 
         let initial_materials = vec!["diamond_sword".to_string()];
         processor
-            .add_with_texture(&initial_materials, &image_path)
+            .add_with_texture(&initial_materials, &image_path, None)
             .unwrap();
 
         // Extend with new material
@@ -317,10 +345,12 @@ mod tests {
         create_test_image(&image_path);
 
         let materials = vec!["diamond_sword".to_string()];
-        processor.add_with_texture(&materials, &image_path).unwrap();
+        processor
+            .add_with_texture(&materials, &image_path, None)
+            .unwrap();
 
-        // Try to add same material again
-        let result = processor.add_material_to_item("diamond_sword");
+        // Try to extend with same material again (should skip duplicate)
+        let result = processor.extend_materials(&materials);
         assert!(result.is_ok()); // Should succeed but skip
 
         // Verify only one entry exists
