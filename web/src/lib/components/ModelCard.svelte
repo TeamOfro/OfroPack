@@ -1,6 +1,7 @@
 <script lang='ts'>
   import type { ModelData } from '$lib/types';
   import { assetUrl } from '$lib/url';
+  import ModelImg from './ModelImg.svelte';
 
   const { model }: { model: ModelData } = $props();
 
@@ -30,13 +31,7 @@
     <div
       class='model-texture relative flex h-72 w-full items-center justify-center overflow-hidden border-b border-b-border bg-[#1a1d21]'
     >
-      <img
-        src={assetUrl(model.texture_url)}
-        alt={model.name}
-        loading='lazy'
-        decoding='async'
-        class='h-4/5 w-4/5 object-contain [image-rendering:pixelated]'
-      />
+      <ModelImg {model} />
     </div>
   </a>
   <div class='model-info p-5'>
