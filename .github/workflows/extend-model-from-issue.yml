@@ -1,4 +1,4 @@
-name: Extend Model from Issue
+name: 🔧 既存モデルにマテリアルを追加
 
 on:
   issues:
@@ -6,6 +6,7 @@ on:
 
 jobs:
   call-reusable-workflow:
+    # 'extend-model' ラベルが付いたIssueのみ処理
     if: contains(github.event.issue.labels.*.name, 'extend-model')
     uses: ./.github/workflows/reusable-process-issue.yml
     with:

@@ -1,21 +1,26 @@
-name: Reusable Process Issue
+name: 🔄 Issue処理（共通ワークフロー）
 
 on:
   workflow_call:
     inputs:
       issue-type:
+        description: '処理タイプ（add: 新規追加, extend: マテリアル拡張）'
         required: true
         type: string
       issue-body:
+        description: 'Issue本文（パース用）'
         required: true
         type: string
       issue-number:
+        description: 'Issue番号'
         required: true
         type: string
       actor:
+        description: 'Issue作成者のユーザー名'
         required: true
         type: string
       actor-id:
+        description: 'Issue作成者のユーザーID'
         required: true
         type: string
     secrets:
@@ -24,6 +29,7 @@ on:
 
 jobs:
   process:
+    name: カスタムモデルを処理
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,25 +37,27 @@ jobs:
       issues: write
 
     steps:
-      - name: Checkout repository
+      - name: 📥 リポジトリをチェックアウト
         uses: actions/checkout@v5
 
-      - name: Setup Rust
+      - name: 🦀 Rustをセットアップ
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
 
-      - name: Build processor tool
+      - name: 🔨 CLIツールをビルド
         run: cargo build --release
 
-      - name: Process issue
+      - name: ⚙️ Issueを処理してモデルを生成
         id: process
         run: |
+          # Issue本文を環境変数として読み込み
           ISSUE_BODY=$(cat << 'ISSUE_EOF'
           ${{ inputs.issue-body }}
           ISSUE_EOF
           )
 
+          # CLIツールでIssueを処理（画像ダウンロード、バリデーション、モデル生成）
           OUTPUT=$(GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner process-issue \
             --issue-type ${{ inputs.issue-type }} \
             --issue-number ${{ inputs.issue-number }} \
@@ -57,6 +65,7 @@ jobs:
 
           EXIT_CODE=$?
 
+          # エラー時はエラーメッセージを保存して終了
           if [ $EXIT_CODE -ne 0 ]; then
             echo "error_occurred=true" >> $GITHUB_OUTPUT
             echo "error_message<<EOF" >> $GITHUB_OUTPUT
@@ -67,61 +76,78 @@ jobs:
 
           set -euo pipefail
 
+          # CLIツールの出力から必要な情報を抽出
           CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
           echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
 
+          # 新規追加の場合はプレビュー画像URLも取得
           if [ "${{ inputs.issue-type }}" = "add" ]; then
             PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
             echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set PR details for 'add'
+      - name: 📝 プルリクエストの内容を準備（新規追加）
         if: inputs.issue-type == 'add'
         id: pr_details_add
         run: |
-          echo "commit_message=カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "commit_message=✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
           echo "title=✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
           BODY=$(cat <<EOF
-          ## 🎨 カスタムモデルデータの追加
+          ## 🎨 カスタムモデルデータを追加しました
 
           Resolves #${{ inputs.issue-number }}
 
-          ### プレビュー（256×256、ピクセルパーフェクト）
+          ### 📸 プレビュー画像（256×256、ピクセルパーフェクト拡大）
 
           ![${{ steps.process.outputs.custom_model_data }}](${{ steps.process.outputs.preview_url }})
 
           ---
 
-          *このPRはGitHub Actionsにより自動生成されました。*
-          EOF
-          )
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          ### ℹ️ 自動生成の内容
 
-      - name: Set PR details for 'extend'
-        if: inputs.issue-type == 'extend'
-        id: pr_details_extend
-        run: |
-          echo "commit_message=マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
-          echo "title=🔧 マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
-          BODY=$(cat <<EOF
-          ## 🔧 カスタムモデルデータの拡張
-
-          Resolves #${{ inputs.issue-number }}
-
-          既存のカスタムモデル `${{ steps.process.outputs.custom_model_data }}` に新しいマテリアルを追加しました。
+          - ✅ テクスチャファイル（\`assets/minecraft/textures/item/${{ steps.process.outputs.custom_model_data }}.png\`）
+          - ✅ モデルファイル（\`assets/minecraft/models/item/${{ steps.process.outputs.custom_model_data }}.json\`）
+          - ✅ 各マテリアルのアイテムオーバーライド設定
 
           ---
 
-          *このPRはGitHub Actionsにより自動生成されました。*
+          *🤖 このプルリクエストは GitHub Actions により自動生成されました*
           EOF
           )
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request
+      - name: 📝 プルリクエストの内容を準備（マテリアル拡張）
+        if: inputs.issue-type == 'extend'
+        id: pr_details_extend
+        run: |
+          echo "commit_message=🔧 マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "title=🔧 既存モデルにマテリアルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+          BODY=$(cat <<EOF
+          ## 🔧 既存のカスタムモデルにマテリアルを追加しました
+
+          Resolves #${{ inputs.issue-number }}
+
+          カスタムモデル \`${{ steps.process.outputs.custom_model_data }}\` に新しいマテリアルを追加し、アイテムオーバーライドを更新しました。
+
+          ---
+
+          ### ℹ️ 変更内容
+
+          - ✅ 新しいマテリアルのアイテムオーバーライド設定を追加
+          - ✅ 既存のモデルとテクスチャはそのまま利用
+
+          ---
+
+          *🤖 このプルリクエストは GitHub Actions により自動生成されました*
+          EOF
+          )
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🚀 プルリクエストを作成
         id: create_pr
         if: success()
         uses: peter-evans/create-pull-request@v6
@@ -135,7 +161,7 @@ jobs:
           committer: GitHub Actions Bot <actions@github.com>
           author: ${{ inputs.actor }} <${{ inputs.actor-id }}+${{ inputs.actor }}@users.noreply.github.com>
 
-      - name: Post success comment
+      - name: ✅ Issueに成功コメントを投稿（新規追加）
         if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'add'
         run: |
           GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-success \
@@ -143,19 +169,19 @@ jobs:
             --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
             --preview-url "${{ steps.process.outputs.preview_url }}"
 
-      - name: Post extend success comment
+      - name: ✅ Issueに成功コメントを投稿（マテリアル拡張）
         if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'extend'
         run: |
           GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-extend-success \
             --issue-number ${{ inputs.issue-number }} \
             --pr-number ${{ steps.create_pr.outputs.pull-request-number }}
 
-      - name: Post failure comment
+      - name: ❌ Issueにエラーコメントを投稿
         if: failure()
         run: |
           ERROR_MSG="${{ steps.process.outputs.error_message }}"
           if [ -z "$ERROR_MSG" ]; then
-            ERROR_MSG="処理中に予期しないエラーが発生しました。"
+            ERROR_MSG="処理中に予期しないエラーが発生しました。ワークフローログを確認してください。"
           fi
 
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: 📦 GitHub Pagesにデプロイ
 
 on:
   push:
@@ -16,26 +16,29 @@ concurrency:
 
 jobs:
   deploy-pages:
+    name: リソースパックとギャラリーをデプロイ
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 📥 リポジトリをチェックアウト
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 全履歴を取得（最新PRの検出用）
 
-      - name: Setup Rust
+      - name: 🦀 Rustをセットアップ
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
 
-      - name: Build Rust CLI tool
+      - name: 🔨 CLIツールをビルド
         run: cargo build --release
 
-      - name: Generate gallery, metadata, and resource pack
+      - name: 🎨 ギャラリー・メタデータ・リソースパックを生成
         id: generate
         run: |
+          # models.json, metadata.json, OfroPack.zip を生成
           ./target/release/processor generates
 
+          # メタデータから情報を抽出
           MODEL_COUNT=$(jq '.count' models.json)
           echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
 
@@ -45,39 +48,39 @@ jobs:
           SIZE=$(jq '.size' metadata.json)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
 
-      - name: Setup Bun
+      - name: 🥟 Bunをセットアップ
         uses: oven-sh/setup-bun@v2
 
-      - name: Build SvelteKit app
+      - name: 🌐 SvelteKitアプリをビルド
         run: |
           cd web
           bun install
           bun run build
 
-      - name: Setup Pages
+      - name: ⚙️ GitHub Pagesを設定
         uses: actions/configure-pages@v4
 
-      - name: Upload artifact
+      - name: 📤 ビルド成果物をアップロード
         uses: actions/upload-pages-artifact@v3
         with:
           path: web/build
 
-      - name: Deploy to GitHub Pages
+      - name: 🚀 GitHub Pagesにデプロイ
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Summary
+      - name: 📋 デプロイ結果サマリー
         run: |
-          echo "## 🎉 デプロイ完了!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 デプロイが完了しました！" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**リソースパック URL:**" >> $GITHUB_STEP_SUMMARY
-          echo "${{steps.deployment.outputs.page_url}}OfroPack.zip" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 リソースパック" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** [${{steps.deployment.outputs.page_url}}OfroPack.zip](${{steps.deployment.outputs.page_url}}OfroPack.zip)" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA-1 ハッシュ:** \`${{ steps.generate.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ファイルサイズ:** $((${{ steps.generate.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**ギャラリー URL:**" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.deployment.outputs.page_url }}gallery" >> $GITHUB_STEP_SUMMARY
+          echo "### 🖼️ ギャラリー" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** [${{ steps.deployment.outputs.page_url }}gallery](${{ steps.deployment.outputs.page_url }}gallery)" >> $GITHUB_STEP_SUMMARY
+          echo "- **モデル数:** ${{ steps.generate.outputs.model_count }} 個" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**カスタムモデル数:** ${{ steps.generate.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**リソースパック SHA-1 ハッシュ:** ${{ steps.generate.outputs.sha1 }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**リソースパック サイズ:** $((${{ steps.generate.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Minecraftサーバーのリソースパック設定に上記のURLとハッシュを使用してください*" >> $GITHUB_STEP_SUMMARY
