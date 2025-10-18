@@ -35,10 +35,7 @@ jobs:
       - name: Generate gallery, metadata, and resource pack
         id: generate
         run: |
-          # TODO:
-          # ./target/release/processor generates \
-          #   --repo-owner "${{ github.repository_owner }}" \
-          #   --repo-name "${{ github.event.repository.name }}"
+          ./target/release/processor generates
 
           MODEL_COUNT=$(jq '.count' models.json)
           echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
@@ -49,34 +46,15 @@ jobs:
           SIZE=$(jq '.size' metadata.json)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
 
-      - name: Prepare public directory
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build svelte ssg app and move to public/
         run: |
-          mkdir -p public/preview
-          mv OfroPack.zip public/
-          mv models.json public/
-          mv metadata.json public/
-
-          cp index.html gallery.html model.html public/
-
-          # Copy preview images
-          if [ -d "preview" ]; then
-            cp -r preview/* public/preview/ 2>/dev/null || true
-          fi
-
-          # Copy textures as fallback
-          for texture in assets/minecraft/textures/item/*.png; do
-            if [ -f "$texture" ]; then
-              filename=$(basename "$texture")
-              if [ ! -f "public/preview/$filename" ]; then
-                cp "$texture" "public/preview/$filename"
-              fi
-            fi
-          done
-
-          # Copy assets directory for texture references
-          cp -r assets public/
-
-          echo "✓ Public directory prepared"
+          cd web
+          bun install
+          bun run build
+          mv build ../public
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

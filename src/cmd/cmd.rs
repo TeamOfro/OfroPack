@@ -14,6 +14,7 @@ pub enum Cmd {
     GenerateGallery(GenerateGallery),
     GenerateMetadata(GenerateMetadata),
     GenerateZip(GenerateZip),
+    Generates(Generates),
     Runner(Runner),
 }
 
@@ -184,3 +185,6 @@ pub enum RunnerSubcommands {
         branch: String,
     },
 }
+
+#[derive(Debug, clap::Parser)]
+pub struct Generates;

@@ -1,4 +1,5 @@
 mod add;
+mod generates;
 mod cmd;
 mod extend;
 mod gallery;
@@ -23,6 +24,7 @@ impl Run for Cmd {
             Cmd::GenerateMetadata(cmd) => cmd.run(),
             Cmd::GenerateZip(cmd) => cmd.run(),
             Cmd::Runner(cmd) => cmd.run(),
+            Cmd::Generates(cmd) => cmd.run(),
         }
     }
 }
