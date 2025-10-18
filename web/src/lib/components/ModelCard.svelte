@@ -1,6 +1,5 @@
 <script lang='ts'>
   import type { ModelData } from '$lib/types';
-  import { assetUrl } from '$lib';
 
   const { model }: { model: ModelData } = $props();
 
@@ -31,7 +30,7 @@
       class='model-texture relative flex h-72 w-full items-center justify-center overflow-hidden border-b border-b-border bg-[#1a1d21]'
     >
       <img
-        src={assetUrl(model.texture_url)}
+        src={import.meta.env.BASE_URL + model.texture_url}
         alt={model.name}
         loading='lazy'
         decoding='async'

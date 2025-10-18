@@ -1,6 +1,5 @@
 <script lang='ts'>
   import type { PageData } from './$types';
-  import { assetUrl } from '$lib';
   import { error } from '@sveltejs/kit';
 
   const { data }: { data: PageData } = $props();
@@ -61,7 +60,7 @@
       class='model-image-container flex items-center justify-center overflow-hidden rounded-lg border border-border bg-[#1a1d21] p-5'
     >
       <img
-        src={assetUrl(model.texture_url)}
+        src={import.meta.env.BASE_URL + model.texture_url}
         alt={`${model.name}のテクスチャ`}
         class="w-full object-contain [image-rendering:pixelated] {isAnimated ? 'animated' : ''}"
         style={imgStyle}
