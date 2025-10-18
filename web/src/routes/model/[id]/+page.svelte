@@ -85,7 +85,7 @@
       <div class='give-command mt-5 rounded-lg border border-border bg-[#1a1d21] p-4'>
         <h3 class='mb-3 text-muted'>/give コマンド</h3>
         {#each model.materials as material}
-          {@const command = `/give @s ${material}[custom_model_data:{strings:['${model.name}']}]`}
+          {@const command = `/give @s ${material}[custom_model_data={strings:['${model.name}']}]`}
           <div class='flex items-center justify-between rounded bg-background p-2 mb-2 last:mb-0'>
             <code class='overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm'
             >/give @s {material}[...]</code
