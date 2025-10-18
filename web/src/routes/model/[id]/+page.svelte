@@ -1,6 +1,7 @@
 <script lang='ts'>
   import type { PageData } from './$types';
-  import { assetUrl } from '$lib';
+  import ModelImg from '$lib/components/ModelImg.svelte';
+  import { assetUrl } from '$lib/url';
   import { error } from '@sveltejs/kit';
 
   const { data }: { data: PageData } = $props();
@@ -20,14 +21,6 @@
     month: 'short',
     day: 'numeric',
   });
-
-  const isAnimated = !!model.animation;
-  let imgStyle = $state('');
-  if (isAnimated && model.animation) {
-    const fps = 20 / model.animation.frametime;
-    const duration = model.animation.frame_count / fps;
-    imgStyle = `animation: sprite-anim ${duration}s steps(${model.animation.frame_count}) infinite; aspect-ratio: 1 / ${model.animation.frame_count};`;
-  }
 
   function copyToClipboard(text: string, button: HTMLButtonElement) {
     navigator.clipboard.writeText(text).then(() => {
@@ -52,7 +45,7 @@
       <h1 class='font-mono text-3xl font-bold text-primary'>{model.name}</h1>
     </div>
     <nav class='nav' aria-label='ページナビゲーション'>
-      <a href='/gallery' class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 hover:bg-primary hover:text-white'>← ギャラリーに戻る</a>
+      <a href={assetUrl('/gallery')} class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 hover:bg-primary hover:text-white'>← ギャラリーに戻る</a>
     </nav>
   </header>
 
@@ -60,12 +53,7 @@
     <div
       class='model-image-container flex items-center justify-center overflow-hidden rounded-lg border border-border bg-[#1a1d21] p-5'
     >
-      <img
-        src={assetUrl(model.texture_url)}
-        alt={`${model.name}のテクスチャ`}
-        class="w-full object-contain [image-rendering:pixelated] {isAnimated ? 'animated' : ''}"
-        style={imgStyle}
-      />
+      <ModelImg {model} />
     </div>
     <div class='model-info'>
       <div class='model-meta'>
@@ -73,7 +61,7 @@
         <p class='mb-2'><strong>📅 追加日:</strong> {addedDate}</p>
         <p class='mb-2'>
           <strong>👤 作者:</strong>
-          <a href={`/gallery?author=${encodeURIComponent(model.author)}`} class='text-primary no-underline hover:underline'>
+          <a href={assetUrl(`/gallery?author=${encodeURIComponent(model.author)}`)} class='text-primary no-underline hover:underline'>
             {model.author}
           </a>
         </p>
@@ -81,7 +69,7 @@
           <strong>🆔 ID:</strong>
           <code class='rounded bg-background p-1 font-mono'>{model.name}</code>
         </p>
-        {#if isAnimated && model.animation}
+        {#if model.animation}
           <p class='mb-2'>
             <strong>🎬 アニメーション:</strong>
             {model.animation.frame_count}フレーム (frametime: {model.animation.frametime})
@@ -109,20 +97,3 @@
     </div>
   </div>
 </main>
-
-<style>
-  .animated {
-    object-fit: cover;
-    object-position: 0 0;
-    width: 100%;
-    height: auto;
-  }
-  @keyframes sprite-anim {
-    from {
-      object-position: 0 0;
-    }
-    to {
-      object-position: 0 100%;
-    }
-  }
-</style>

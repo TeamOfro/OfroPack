@@ -1,5 +1,6 @@
 <script lang='ts'>
   import type { PageData } from './$types';
+  import { replaceState } from '$app/navigation';
   import ModelCard from '$lib/components/ModelCard.svelte';
   import { onMount } from 'svelte';
 
@@ -45,7 +46,7 @@
       );
     }
 
-    return filtered.sort((a, b) => {
+    const sorted = filtered.sort((a, b) => {
       switch (sortOrder) {
         case 'date_asc':
           return new Date(a.added_date).getTime() - new Date(b.added_date).getTime();
@@ -58,6 +59,14 @@
           return new Date(b.added_date).getTime() - new Date(a.added_date).getTime();
       }
     });
+    return {
+      get length() {
+        return sorted.length;
+      },
+      get models() {
+        return sorted;
+      },
+    };
   });
 
   onMount(() => {
@@ -79,8 +88,17 @@
     if (sortOrder !== 'date_desc')
       urlParams.set('sort', sortOrder);
 
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    history.replaceState(history.state, '', newUrl);
+    let newUrl = window.location.pathname;
+
+    if (urlParams.size !== 0) {
+      newUrl += `?${urlParams.toString()}`;
+    }
+
+    try {
+      replaceState(newUrl, {});
+    }
+    catch {
+    }
   });
 
 </script>
@@ -149,13 +167,13 @@
       <div class='error col-span-full' role='alert'>
         <strong>{error}</strong>
       </div>
-    {:else if filteredModels.length === 0}
-      <div class='error col-span-full' role='status'>
-        条件に一致するカスタムモデルが見つかりませんでした。<br />フィルタ条件を変更してみてください。
-      </div>
     {:else}
-      {#each filteredModels as model (model.name)}
+      {#each filteredModels.models as model (model.name)}
         <ModelCard {model} />
+      {:else}
+        <div class='error col-span-full' role='status'>
+          条件に一致するカスタムモデルが見つかりませんでした。<br />フィルタ条件を変更してみてください。
+        </div>
       {/each}
     {/if}
   </section>

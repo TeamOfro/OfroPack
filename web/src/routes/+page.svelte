@@ -1,6 +1,7 @@
 <script lang='ts'>
   import type { PageData } from './$types';
   import InfoCard from '$lib/components/InfoCard.svelte';
+  import { assetUrl } from '$lib/url';
 
   const { data }: { data: PageData } = $props();
 
@@ -50,8 +51,8 @@
   {/if}
 
   <nav class='mb-6 text-center' aria-label='主要アクション'>
-    <a href='/OfroPack.zip' class='inline-block bg-primary text-white py-3 px-6 no-underline rounded-lg text-lg font-bold transition-all duration-300 hover:bg-primary-hover hover:-translate-y-0.5 m-1' download>⬇️ ダウンロード</a>
-    <a href='/gallery' class='inline-block bg-transparent border border-primary text-primary py-3 px-6 no-underline rounded-lg text-lg font-bold transition-all duration-300 hover:bg-primary hover:text-white m-1'>🎨 ギャラリー</a>
+    <a href={assetUrl('/OfroPack.zip')} class='inline-block bg-primary text-white py-3 px-6 no-underline rounded-lg text-lg font-bold transition-all duration-300 hover:bg-primary-hover hover:-translate-y-0.5 m-1' download>⬇️ ダウンロード</a>
+    <a href={assetUrl('/gallery')} class='inline-block bg-transparent border border-primary text-primary py-3 px-6 no-underline rounded-lg text-lg font-bold transition-all duration-300 hover:bg-primary hover:text-white m-1'>🎨 ギャラリー</a>
   </nav>
 
   <section class='info-grid mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3' aria-label='パック情報'>
