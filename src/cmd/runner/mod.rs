@@ -31,7 +31,8 @@ impl Run for Runner {
             RunnerSubcommands::PostExtendSuccess {
                 issue_number,
                 pr_number,
-            } => post_extend_success::run(*issue_number, *pr_number),
+                materials,
+            } => post_extend_success::run(*issue_number, *pr_number, materials.clone()),
             RunnerSubcommands::PostFailure {
                 issue_number,
                 error_message,

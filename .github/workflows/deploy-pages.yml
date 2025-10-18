@@ -35,10 +35,10 @@ jobs:
       - name: 🎨 ギャラリー・メタデータ・リソースパックを生成
         id: generate
         run: |
-          # models.json, metadata.json, OfroPack.zip を生成
+          # models.json, metadata.json, OfroPack.zip を一括生成
           ./target/release/processor generates
 
-          # メタデータから情報を抽出
+          # メタデータから情報を抽出してGitHub Actions環境変数に出力
           MODEL_COUNT=$(jq '.count' models.json)
           echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
 
@@ -74,13 +74,13 @@ jobs:
           echo "## 🎉 デプロイが完了しました！" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 リソースパック" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** [${{steps.deployment.outputs.page_url}}OfroPack.zip](${{steps.deployment.outputs.page_url}}OfroPack.zip)" >> $GITHUB_STEP_SUMMARY
+          echo "- **ダウンロードURL:** [${{steps.deployment.outputs.page_url}}OfroPack.zip](${{steps.deployment.outputs.page_url}}OfroPack.zip)" >> $GITHUB_STEP_SUMMARY
           echo "- **SHA-1 ハッシュ:** \`${{ steps.generate.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **ファイルサイズ:** $((${{ steps.generate.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🖼️ ギャラリー" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** [${{ steps.deployment.outputs.page_url }}gallery](${{ steps.deployment.outputs.page_url }}gallery)" >> $GITHUB_STEP_SUMMARY
-          echo "- **モデル数:** ${{ steps.generate.outputs.model_count }} 個" >> $GITHUB_STEP_SUMMARY
+          echo "- **ギャラリーURL:** [${{ steps.deployment.outputs.page_url }}gallery](${{ steps.deployment.outputs.page_url }}gallery)" >> $GITHUB_STEP_SUMMARY
+          echo "- **カスタムモデル数:** ${{ steps.generate.outputs.model_count }} 個" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Minecraftサーバーのリソースパック設定に上記のURLとハッシュを使用してください*" >> $GITHUB_STEP_SUMMARY
+          echo "*💡 Minecraftサーバーの server.properties に上記のURLとSHA-1ハッシュを設定してください*" >> $GITHUB_STEP_SUMMARY
