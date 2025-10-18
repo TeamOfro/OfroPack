@@ -27,6 +27,7 @@ export const entries: EntryGenerator = async () => {
     // During build, read from static directory
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
+    const process = await import('node:process');
     const filePath = path.resolve(process.cwd(), 'static', 'models.json');
     const content = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(content) as ModelsJson;

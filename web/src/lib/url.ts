@@ -14,13 +14,13 @@ export function getBaseUrl(): string {
 export function assetUrl(url: string): string {
   const base = getBaseUrl();
 
-  // If no base URL, return as-is (local development)
-  if (!base || base === '/') {
-    return url;
-  }
-
   // Remove leading slash from url if present
   const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+
+  // If no base URL, return as-is (local development)
+  if (!base || base === '/') {
+    return `/${cleanUrl}`;
+  }
 
   // Combine base and url, ensuring single slash
   return `${base}/${cleanUrl}`.replace(/\/+/g, '/');
