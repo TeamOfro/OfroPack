@@ -36,6 +36,18 @@ impl Paths {
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
     }
+
+    pub fn items_dir() -> PathBuf {
+        Self::root().join(Self::ITEMS)
+    }
+
+    pub fn models_dir() -> PathBuf {
+        Self::root().join(Self::MODELS)
+    }
+
+    pub fn textures_dir() -> PathBuf {
+        Self::root().join(Self::TEXTURES)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]

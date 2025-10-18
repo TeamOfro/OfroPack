@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::cmd::{GenerateGallery, Run};
-use crate::gallery::GalleryGenerator;
+use crate::services::GalleryGenerator;
 
 impl Run for GenerateGallery {
     fn run(&self) -> Result<()> {

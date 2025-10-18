@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::cmd::{Extend, Run};
-use crate::processor::Processor;
+use crate::services::Processor;
 
 impl Run for Extend {
     fn run(&self) -> Result<()> {

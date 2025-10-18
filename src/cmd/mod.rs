@@ -1,8 +1,8 @@
 mod add;
-mod generates;
 mod cmd;
 mod extend;
 mod gallery;
+mod generates;
 mod metadata;
 mod runner;
 mod zip;

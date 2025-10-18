@@ -3,8 +3,8 @@ use std::path::PathBuf;
 
 use super::{GitHubClient, ImageDownloader, IssueParser, PreviewGenerator};
 use crate::constants::{IssueType, REPO_NAME, REPO_OWNER};
-use crate::processor::Processor;
 use crate::runner::issue_parser::ParsedIssueData;
+use crate::services::Processor;
 
 /// Orchestrates the entire issue processing workflow
 pub struct IssueProcessor {
@@ -13,7 +13,7 @@ pub struct IssueProcessor {
 }
 
 pub struct ProcessResult {
-    pub preview_url: Option<String>,   // None for Extend type
+    pub preview_url: Option<String>, // None for Extend type
     pub custom_model_data: String,
     pub added_materials: Option<Vec<String>>, // Some for Extend type
 }

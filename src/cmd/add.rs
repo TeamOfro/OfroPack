@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::cmd::{Add, Run};
 use crate::models::AnimationInfo;
-use crate::processor::Processor;
+use crate::services::Processor;
 
 impl Run for Add {
     fn run(&self) -> Result<()> {

@@ -7,12 +7,13 @@ use clap::Parser;
 
 mod cmd;
 mod constants;
+mod domain;
 mod file_utils;
-mod gallery;
 mod image_validator;
+mod infra;
 mod models;
-mod processor;
 mod runner;
+mod services;
 
 use crate::cmd::{Cmd, Run};
 
