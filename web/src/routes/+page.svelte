@@ -10,8 +10,6 @@
   const updated = metadata ? new Date(metadata.updated_at).toLocaleString('ja-JP') : errorText;
   const latestPr = metadata?.latest_pr;
   const sha1 = metadata?.sha1 || errorText;
-  const packUrl = metadata?.download_url || errorText;
-  const hashUrl = metadata?.download_url ? metadata.download_url.replace('OfroPack.zip', 'hash.txt') : errorText;
 
   function copyToClipboard(text: string, button: HTMLButtonElement) {
     navigator.clipboard
@@ -84,22 +82,6 @@
       <div class='flex items-center justify-between bg-background p-2 rounded-md'>
         <code class='font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis'>{sha1}</code>
         <button class='bg-primary text-white border-none py-1.5 px-2.5 rounded-md cursor-pointer text-sm transition-colors duration-300 whitespace-nowrap hover:bg-primary-hover' onclick={e => copyToClipboard(sha1, e.currentTarget)}>コピー</button>
-      </div>
-    </div>
-
-    <div class='bg-[#373c47] p-4 rounded-lg mb-2.5'>
-      <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>リソースパック URL</h3>
-      <div class='flex items-center justify-between bg-background p-2 rounded-md'>
-        <code class='font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis'>{packUrl}</code>
-        <button class='bg-primary text-white border-none py-1.5 px-2.5 rounded-md cursor-pointer text-sm transition-colors duration-300 whitespace-nowrap hover:bg-primary-hover' onclick={e => copyToClipboard(packUrl, e.currentTarget)}>コピー</button>
-      </div>
-    </div>
-
-    <div class='bg-[#373c47] p-4 rounded-lg mb-2.5'>
-      <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>ハッシュ URL</h3>
-      <div class='flex items-center justify-between bg-background p-2 rounded-md'>
-        <code class='font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis'>{hashUrl}</code>
-        <button class='bg-primary text-white border-none py-1.5 px-2.5 rounded-md cursor-pointer text-sm transition-colors duration-300 whitespace-nowrap hover:bg-primary-hover' onclick={e => copyToClipboard(hashUrl, e.currentTarget)}>コピー</button>
       </div>
     </div>
   </section>
