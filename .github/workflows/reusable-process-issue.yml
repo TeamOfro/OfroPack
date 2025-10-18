@@ -52,7 +52,7 @@ jobs:
           ISSUE_EOF
           )
 
-          OUTPUT=$(./target/release/processor runner process-issue \
+          OUTPUT=$(GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner process-issue \
             --issue-type ${{ inputs.issue-type }} \
             --issue-number ${{ inputs.issue-number }} \
             --body "$ISSUE_BODY" 2>&1)
@@ -136,7 +136,7 @@ jobs:
       - name: Post success comment
         if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'add'
         run: |
-          ./target/release/processor runner post-success \
+          GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-success \
             --issue-number ${{ inputs.issue-number }} \
             --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
             --preview-url "${{ steps.process.outputs.preview_url }}"
@@ -144,7 +144,7 @@ jobs:
       - name: Post extend success comment
         if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'extend'
         run: |
-          ./target/release/processor runner post-extend-success \
+          GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-extend-success \
             --issue-number ${{ inputs.issue-number }} \
             --pr-number ${{ steps.create_pr.outputs.pull-request-number }}
 
@@ -158,7 +158,7 @@ jobs:
 
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          ./target/release/processor runner post-failure \
+          GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-failure \
             --issue-number ${{ inputs.issue-number }} \
             --error-message "$ERROR_MSG" \
             --workflow-url "$WORKFLOW_URL"
