@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/netherite_sword"
+    },
+    "cases": [
+      {
+        "when": "18th_century_steam",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/18th_century_steam"
+        }
+      }
+    ]
+  }
+}
