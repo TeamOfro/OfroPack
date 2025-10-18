@@ -51,7 +51,7 @@
 
   <div class='model-details grid grid-cols-1 gap-8 md:grid-cols-2'>
     <div
-      class='model-image-container flex items-center justify-center overflow-hidden rounded-lg border border-border bg-[#1a1d21] p-5'
+      class='w-80 xl:w-100 aspect-square flex items-center justify-center overflow-hidden rounded-lg border border-border bg-[#1a1d21] p-5'
     >
       <ModelImg {model} />
     </div>

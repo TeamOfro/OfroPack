@@ -29,7 +29,7 @@ on:
 
 jobs:
   process:
-    name: カスタムモデルを処理
+    name: 🎨 カスタムモデルを処理
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -48,7 +48,7 @@ jobs:
       - name: 🔨 CLIツールをビルド
         run: cargo build --release
 
-      - name: ⚙️ Issueを処理してモデルを生成
+      - name: ⚙️  Issueを処理してモデルを生成
         id: process
         run: |
           # Issue本文を環境変数として読み込み
@@ -86,6 +86,12 @@ jobs:
             echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           fi
 
+          # マテリアル拡張の場合は追加されたマテリアルリストを取得
+          if [ "${{ inputs.issue-type }}" = "extend" ]; then
+            ADDED_MATERIALS=$(echo "$OUTPUT" | grep "^ADDED_MATERIALS=" | cut -d= -f2-)
+            echo "added_materials=$ADDED_MATERIALS" >> $GITHUB_OUTPUT
+          fi
+
       - name: 📝 プルリクエストの内容を準備（新規追加）
         if: inputs.issue-type == 'add'
         id: pr_details_add
@@ -103,11 +109,11 @@ jobs:
 
           ---
 
-          ### ℹ️ 自動生成の内容
+          ### ℹ️  自動生成された内容
 
           - ✅ テクスチャファイル（\`assets/minecraft/textures/item/${{ steps.process.outputs.custom_model_data }}.png\`）
           - ✅ モデルファイル（\`assets/minecraft/models/item/${{ steps.process.outputs.custom_model_data }}.json\`）
-          - ✅ 各マテリアルのアイテムオーバーライド設定
+          - ✅ 各マテリアルのアイテムオーバーライド設定を追加
 
           ---
 
@@ -124,6 +130,14 @@ jobs:
         run: |
           echo "commit_message=🔧 マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
           echo "title=🔧 既存モデルにマテリアルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+
+          # マテリアルリストを箇条書きに変換
+          IFS=',' read -ra MATERIALS <<< "${{ steps.process.outputs.added_materials }}"
+          MATERIALS_LIST=""
+          for material in "${MATERIALS[@]}"; do
+            MATERIALS_LIST+="- \`$material\`"$'\n'
+          done
+
           BODY=$(cat <<EOF
           ## 🔧 既存のカスタムモデルにマテリアルを追加しました
 
@@ -133,9 +147,15 @@ jobs:
 
           ---
 
-          ### ℹ️ 変更内容
+          ### 📦 追加されたマテリアル
 
-          - ✅ 新しいマテリアルのアイテムオーバーライド設定を追加
+          ${MATERIALS_LIST}
+
+          ---
+
+          ### ℹ️  変更内容
+
+          - ✅ 上記のマテリアルのアイテムオーバーライド設定を追加
           - ✅ 既存のモデルとテクスチャはそのまま利用
 
           ---
@@ -174,7 +194,8 @@ jobs:
         run: |
           GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-extend-success \
             --issue-number ${{ inputs.issue-number }} \
-            --pr-number ${{ steps.create_pr.outputs.pull-request-number }}
+            --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
+            --materials "${{ steps.process.outputs.added_materials }}"
 
       - name: ❌ Issueにエラーコメントを投稿
         if: failure()

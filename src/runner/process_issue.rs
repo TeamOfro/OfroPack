@@ -13,8 +13,9 @@ pub struct IssueProcessor {
 }
 
 pub struct ProcessResult {
-    pub preview_url: Option<String>, // None for Extend type
+    pub preview_url: Option<String>,   // None for Extend type
     pub custom_model_data: String,
+    pub added_materials: Option<Vec<String>>, // Some for Extend type
 }
 
 impl IssueProcessor {
@@ -111,6 +112,7 @@ impl IssueProcessor {
                 Ok(ProcessResult {
                     preview_url: Some(preview_url),
                     custom_model_data,
+                    added_materials: None,
                 })
             }
             ParsedIssueData::Extend {
@@ -118,7 +120,7 @@ impl IssueProcessor {
                 custom_model_data,
             } => {
                 println!("  タイプ: Extend");
-                println!("  マテリアル: {}", materials.join(", "));
+                println!("  追加するマテリアル: {}", materials.join(", "));
                 println!("  カスタムモデルデータ: {}", custom_model_data);
 
                 // Step 3: Extend materials
@@ -134,6 +136,7 @@ impl IssueProcessor {
                 Ok(ProcessResult {
                     preview_url: None,
                     custom_model_data,
+                    added_materials: Some(materials),
                 })
             }
         }
@@ -166,14 +169,29 @@ impl IssueProcessor {
     }
 
     /// Post success comment for Extend (no preview)
-    pub fn post_extend_success(&self, issue_number: u64, pr_number: u64) -> Result<()> {
+    pub fn post_extend_success(
+        &self,
+        issue_number: u64,
+        pr_number: u64,
+        materials: &[String],
+    ) -> Result<()> {
+        let materials_list = materials
+            .iter()
+            .map(|m| format!("- `{}`", m))
+            .collect::<Vec<_>>()
+            .join("\n");
+
         let comment = format!(
             r#"## ✅ マテリアルの拡張が完了しました！
 
 **Pull Request:** #{}
 
-既存のカスタムモデルに新しいマテリアルが追加されました。PRをレビューしてマージしてください。"#,
-            pr_number
+### 追加されたマテリアル
+
+{}
+
+既存のカスタムモデルに上記のマテリアルが追加されました。PRをレビューしてマージしてください。"#,
+            pr_number, materials_list
         );
 
         self.github_client

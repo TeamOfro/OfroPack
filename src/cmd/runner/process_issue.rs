@@ -10,6 +10,9 @@ pub fn run(issue_number: u64, issue_type: IssueType, body: &str) -> Result<()> {
     if let Some(preview_url) = result.preview_url {
         println!("PREVIEW_URL={}", preview_url);
     }
+    if let Some(materials) = result.added_materials {
+        println!("ADDED_MATERIALS={}", materials.join(","));
+    }
     println!("CUSTOM_MODEL_DATA={}", result.custom_model_data);
 
     Ok(())

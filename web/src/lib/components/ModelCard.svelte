@@ -29,7 +29,7 @@
 >
   <a href={assetUrl(`/model/${model.name}`)} class='block'>
     <div
-      class='relative flex h-72 w-full items-center justify-center overflow-hidden border-b border-b-border bg-[#1a1d21]'
+      class='relative flex h-60 min-[1400px]:h-72 w-full items-center justify-center overflow-hidden border-b border-b-border bg-[#1a1d21]'
     >
       <ModelImg {model} />
     </div>

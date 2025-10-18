@@ -118,6 +118,10 @@ pub enum RunnerSubcommands {
         /// Pull Request番号
         #[arg(long)]
         pr_number: u64,
+
+        /// 追加されたマテリアルのカンマ区切りリスト
+        #[arg(long, value_delimiter = ',')]
+        materials: Vec<String>,
     },
 
     /// 失敗コメントを投稿してIssueをクローズ
