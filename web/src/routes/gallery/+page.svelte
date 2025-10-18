@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { replaceState } from '$app/navigation';
   import ModelCard from '$lib/components/ModelCard.svelte';
+  import { assetUrl } from '$lib/url';
   import { onMount } from 'svelte';
 
   const { data }: { data: PageData } = $props();
@@ -118,7 +119,7 @@
       <p class='text-base text-muted'>OfroPack に含まれる全てのカスタムモデル</p>
     </div>
     <nav class='nav' aria-label='ページナビゲーション'>
-      <a href='/' class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 whitespace-nowrap hover:bg-primary hover:text-white'>← ホームに戻る</a>
+      <a href={assetUrl('/')} class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 whitespace-nowrap hover:bg-primary hover:text-white'>← ホームに戻る</a>
     </nav>
   </header>
 
