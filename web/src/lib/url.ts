@@ -3,7 +3,7 @@
  */
 export function getBaseUrl(): string {
   // During build, use import.meta.env
-  return import.meta.env.PUBLIC_BASE_URL || '';
+  return import.meta.env.VITE_PUBLIC_BASE_URL || '';
 }
 
 /**
@@ -18,7 +18,7 @@ export function assetUrl(url: string): string {
   const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
 
   // If no base URL, return as-is (local development)
-  if (!base || base === '/') {
+  if (base.length === 0 || base === '/') {
     return `/${cleanUrl}`;
   }
 
