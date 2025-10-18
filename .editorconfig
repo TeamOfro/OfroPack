@@ -14,6 +14,9 @@ insert_final_newline = true
 indent_size = 2
 insert_final_newline = false
 
+[*.js,ts,svelte,json]
+indent_size = 2
+
 [*.rs]
 max_line_length = 100
 
