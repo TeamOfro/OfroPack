@@ -15,10 +15,14 @@ use crate::cmd::{Run, Runner, RunnerSubcommands};
 impl Run for Runner {
     fn run(&self) -> Result<()> {
         match &self.subcommand {
-            RunnerSubcommands::ProcessIssue { issue_number, body } => {
-                process_issue::run(*issue_number, body)
+            RunnerSubcommands::ProcessIssue {
+                issue_number,
+                issue_type,
+                body,
+            } => process_issue::run(*issue_number, *issue_type, body),
+            RunnerSubcommands::ParseIssue { body, issue_type } => {
+                parse_issue::run(body, *issue_type)
             }
-            RunnerSubcommands::ParseIssue { body } => parse_issue::run(body),
             RunnerSubcommands::PostSuccess {
                 issue_number,
                 pr_number,

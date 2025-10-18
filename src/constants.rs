@@ -37,3 +37,9 @@ impl Paths {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum IssueType {
+    Add,
+    Extend,
+}

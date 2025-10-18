@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::path::PathBuf;
 
 use super::{GitHubClient, ImageDownloader, IssueParser, PreviewGenerator};
-use crate::constants::{REPO_NAME, REPO_OWNER};
+use crate::constants::{IssueType, REPO_NAME, REPO_OWNER};
 use crate::processor::Processor;
 use crate::runner::issue_parser::ParsedIssueData;
 
@@ -26,7 +26,12 @@ impl IssueProcessor {
     }
 
     /// Process issue: parse, download (if Add), validate, add/extend model, generate preview (if Add)
-    pub fn process(&self, issue_number: u64, issue_body: &str) -> Result<ProcessResult> {
+    pub fn process(
+        &self,
+        issue_number: u64,
+        issue_type: IssueType,
+        issue_body: &str,
+    ) -> Result<ProcessResult> {
         println!("\n=== Issue #{}の処理を開始 ===\n", issue_number);
 
         // Step 1: Add rocket reaction
@@ -37,7 +42,8 @@ impl IssueProcessor {
 
         // Step 2: Parse issue body
         println!("\n📝 Issueを解析中...");
-        let parsed = IssueParser::parse(issue_body).context("Issueの解析に失敗しました")?;
+        let parsed =
+            IssueParser::parse(issue_body, issue_type).context("Issueの解析に失敗しました")?;
 
         match parsed {
             ParsedIssueData::Add {

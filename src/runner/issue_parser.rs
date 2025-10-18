@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
-use crate::models::AnimationInfo;
+use crate::{constants::IssueType, models::AnimationInfo};
 
 /// Parsed issue data for custom model request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,23 +21,11 @@ pub enum ParsedIssueData {
 pub struct IssueParser;
 
 impl IssueParser {
-    /// Parse issue body based on labels to detect issue type
-    #[allow(dead_code)] // For future use with workflow label-based routing
-    pub fn parse_with_labels(body: &str, labels: &[String]) -> Result<ParsedIssueData> {
-        if labels.contains(&"extend-model".to_string()) {
-            Self::parse_extend(body)
-        } else if labels.contains(&"custom-model".to_string()) {
-            Self::parse_add(body)
-        } else {
-            bail!(
-                "このIssueは対応していないラベルです。'custom-model' または 'extend-model' ラベルが必要です。"
-            );
+    pub fn parse(body: &str, issue_type: IssueType) -> Result<ParsedIssueData> {
+        match issue_type {
+            IssueType::Add => Self::parse_add(body),
+            IssueType::Extend => Self::parse_extend(body),
         }
-    }
-
-    /// Parse issue body in Markdown format (legacy, assumes Add type)
-    pub fn parse(body: &str) -> Result<ParsedIssueData> {
-        Self::parse_add(body)
     }
 
     /// Parse Add type issue
@@ -239,7 +227,7 @@ https://example.com/image.png
 Test note
 "#;
 
-        let result = IssueParser::parse(body).unwrap();
+        let result = IssueParser::parse(body, IssueType::Add).unwrap();
         match result {
             ParsedIssueData::Add {
                 materials,
@@ -277,7 +265,7 @@ https://example.com/animated.png
 
 "#;
 
-        let result = IssueParser::parse(body).unwrap();
+        let result = IssueParser::parse(body, IssueType::Add).unwrap();
         match result {
             ParsedIssueData::Add { animation, .. } => {
                 assert_eq!(animation.map(|anim| anim.frametime.get()), Some(5));
@@ -298,7 +286,7 @@ test_model
 https://example.com/image.png
 "#;
 
-        assert!(IssueParser::parse(body).is_err());
+        assert!(IssueParser::parse(body, IssueType::Add).is_err());
     }
 
     #[test]
@@ -317,7 +305,7 @@ test model!@#
 https://example.com/image.png
 "#;
 
-        assert!(IssueParser::parse(body).is_err());
+        assert!(IssueParser::parse(body, IssueType::Add).is_err());
     }
 
     #[test]

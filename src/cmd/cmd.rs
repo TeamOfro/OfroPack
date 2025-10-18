@@ -1,6 +1,6 @@
 #![allow(clippy::module_inception)]
 
-use crate::constants::{REPO_NAME, REPO_OWNER};
+use crate::constants::{IssueType, REPO_NAME, REPO_OWNER};
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -76,6 +76,9 @@ pub enum RunnerSubcommands {
         #[arg(long)]
         issue_number: u64,
 
+        #[arg(long)]
+        issue_type: IssueType,
+
         /// IssueのBody（Markdown形式）
         #[arg(long)]
         body: String,
@@ -86,6 +89,9 @@ pub enum RunnerSubcommands {
         /// Issue body text (Markdown format)
         #[arg(long)]
         body: String,
+
+        #[arg(long)]
+        issue_type: IssueType,
     },
 
     /// 成功コメントを投稿 (Add用)
