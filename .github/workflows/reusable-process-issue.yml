@@ -67,11 +67,13 @@ jobs:
 
           set -euo pipefail
 
-          PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
           CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
-
-          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
+
+          if [ "${{ inputs.issue-type }}" = "add" ]; then
+            PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
+            echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set PR details for 'add'
         if: inputs.issue-type == 'add'
