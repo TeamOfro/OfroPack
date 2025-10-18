@@ -10,7 +10,7 @@
 
   const style = isAnimated
     ? `
-      animation: sprite-anim ${frametime / 20}s steps(${frameCount}) infinite;
+      animation: sprite-anim ${frametime / (20 / frameCount)}s steps(${frameCount}) infinite;
     `
     : `
     `;
