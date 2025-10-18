@@ -16,13 +16,13 @@
     `;
 </script>
 
-<div class='h-full mx-auto aspect-square relative overflow-y-hidden'>
+<div class='mx-auto aspect-square relative overflow-y-hidden h-full'>
   <img
     src={assetUrl(model.texture_url)}
     alt={model.name}
     loading='lazy'
     decoding='async'
-    class='absolute w-full object-contain [image-rendering:pixelated] transition-none transform-none'
+    class='absolute w-full object-contain [image-rendering:pixelated] transition-none'
     style={style}
   />
 </div>
