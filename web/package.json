@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.0.0",
@@ -19,6 +21,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^24.8.1",
     "eslint": "^9.38.0",
+    "eslint-plugin-svelte": "^3.12.4",
     "svelte": "^5.39.5",
     "svelte-check": "^4.3.2",
     "tailwindcss": "^4.1.14",
