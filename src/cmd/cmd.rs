@@ -1,5 +1,6 @@
 #![allow(clippy::module_inception)]
 
+use crate::constants::{IssueType, REPO_NAME, REPO_OWNER};
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -11,8 +12,14 @@ pub enum Cmd {
     Add(Add),
     Extend(Extend),
     GenerateGallery(GenerateGallery),
+    GenerateMetadata(GenerateMetadata),
+    GenerateZip(GenerateZip),
+    Generates(Generates),
     Runner(Runner),
 }
+
+use super::metadata::GenerateMetadata;
+use super::zip::GenerateZip;
 
 /// 新しいカスタムモデルをテクスチャと共に追加
 #[derive(Parser, Debug)]
@@ -69,6 +76,9 @@ pub enum RunnerSubcommands {
         #[arg(long)]
         issue_number: u64,
 
+        #[arg(long)]
+        issue_type: IssueType,
+
         /// IssueのBody（Markdown形式）
         #[arg(long)]
         body: String,
@@ -79,6 +89,9 @@ pub enum RunnerSubcommands {
         /// Issue body text (Markdown format)
         #[arg(long)]
         body: String,
+
+        #[arg(long)]
+        issue_type: IssueType,
     },
 
     /// 成功コメントを投稿 (Add用)
@@ -166,15 +179,18 @@ pub enum RunnerSubcommands {
         preview_dir: PathBuf,
 
         /// Repository owner (for URL generation)
-        #[arg(long)]
-        repo_owner: Option<String>,
+        #[arg(long, default_value = REPO_OWNER)]
+        repo_owner: String,
 
         /// Repository name (for URL generation)
-        #[arg(long)]
-        repo_name: Option<String>,
+        #[arg(long, default_value = REPO_NAME)]
+        repo_name: String,
 
         /// Branch name (for URL generation)
-        #[arg(long)]
-        branch: Option<String>,
+        #[arg(long, default_value = "main")]
+        branch: String,
     },
 }
+
+#[derive(Debug, clap::Parser)]
+pub struct Generates;

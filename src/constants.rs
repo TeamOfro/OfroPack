@@ -1,5 +1,12 @@
 use std::path::PathBuf;
 
+pub const REPO_OWNER: &str = "TeamOfro";
+pub const REPO_NAME: &str = "OfroPack";
+
+pub fn repo_url(owner: &str, name: &str) -> String {
+    format!("https://github.com/{}/{}", owner, name)
+}
+
 pub struct Paths;
 
 impl Paths {
@@ -29,4 +36,10 @@ impl Paths {
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum IssueType {
+    Add,
+    Extend,
 }

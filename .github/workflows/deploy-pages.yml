@@ -15,9 +15,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  deploy-pages:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,105 +28,31 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Get latest merged PR
-        id: latest_pr
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const commits = await github.rest.repos.listCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: 'main',
-              per_page: 50
-            });
-
-            for (const commit of commits.data) {
-              const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: commit.sha
-              });
-
-              const mergedPR = prs.data.find(pr => pr.merged_at !== null);
-              if (mergedPR) {
-                core.setOutput('pr_number', mergedPR.number);
-                core.setOutput('pr_title', mergedPR.title);
-                core.setOutput('pr_url', mergedPR.html_url);
-                console.log(`Found latest merged PR: #${mergedPR.number} - ${mergedPR.title}`);
-                return;
-              }
-            }
-
-            core.setOutput('pr_number', '');
-            core.setOutput('pr_title', '');
-            core.setOutput('pr_url', '');
-            console.log('No merged PR found');
-
       - name: Build Rust CLI tool
         run: cargo build --release
 
-      - name: Generate gallery data
-        id: gallery
+      - name: Generate gallery, metadata, and resource pack
+        id: generate
         run: |
-          ./target/release/processor generate-gallery -o models.json
+          ./target/release/processor generates
+
           MODEL_COUNT=$(jq '.count' models.json)
           echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
 
-      - name: Create resource pack
-        id: pack
-        run: |
-          zip -r OfroPack.zip assets/ pack.mcmeta pack.png
-          SHA1=$(sha1sum OfroPack.zip | awk '{print $1}')
+          SHA1=$(jq -r '.sha1' metadata.json)
           echo "sha1=$SHA1" >> $GITHUB_OUTPUT
-          SIZE=$(stat -f%z OfroPack.zip 2>/dev/null || stat -c%s OfroPack.zip)
+
+          SIZE=$(jq '.size' metadata.json)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
-          echo "Resource pack created: $SIZE bytes, SHA1: $SHA1"
 
-      - name: Prepare public directory
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build SvelteKit app
         run: |
-          mkdir -p public/preview
-          mv OfroPack.zip public/
-          mv models.json public/
-
-          echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
-
-          cat > public/metadata.json << 'JSONEOF'
-          {
-            "version": "$(date +%Y%m%d-%H%M%S)",
-            "sha1": "${{ steps.pack.outputs.sha1 }}",
-            "size": ${{ steps.pack.outputs.size }},
-            "commit": "${{ github.sha }}",
-            "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "download_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip",
-            "latest_pr": {
-              "number": "${{ steps.latest_pr.outputs.pr_number }}",
-              "title": "${{ steps.latest_pr.outputs.pr_title }}",
-              "url": "${{ steps.latest_pr.outputs.pr_url }}"
-            }
-          }
-          JSONEOF
-
-          cp index.html gallery.html model.html public/
-
-          # Copy preview images
-          if [ -d "preview" ]; then
-            cp -r preview/* public/preview/ 2>/dev/null || true
-          fi
-
-          # Copy textures as fallback
-          for texture in assets/minecraft/textures/item/*.png; do
-            if [ -f "$texture" ]; then
-              filename=$(basename "$texture")
-              if [ ! -f "public/preview/$filename" ]; then
-                cp "$texture" "public/preview/$filename"
-              fi
-            fi
-          done
-
-          # Copy assets directory for texture references
-          cp -r assets public/
-
-          echo "✓ Public directory prepared"
+          cd web
+          bun install
+          bun run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -135,7 +60,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: web/build
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -146,13 +71,14 @@ jobs:
           echo "## 🎉 デプロイ完了!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**リソースパック URL:**" >> $GITHUB_STEP_SUMMARY
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip" >> $GITHUB_STEP_SUMMARY
+          echo "${{steps.deployment.outputs.page_url}}OfroPack.zip" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**ギャラリー URL:**" >> $GITHUB_STEP_SUMMARY
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/gallery.html" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}gallery" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**モデル数:** ${{ steps.gallery.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**カスタムモデル数:** ${{ steps.generate.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**SHA1:** \`${{ steps.pack.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**リソースパック SHA-1 ハッシュ:**" >> $GITHUB
+          echo "${{ steps.generate.outputs.sha1 }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**サイズ:** $((${{ steps.pack.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
+          echo "**リソースパック サイズ:** $((${{ needs.generate-data.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY

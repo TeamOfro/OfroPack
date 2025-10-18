@@ -4,111 +4,15 @@ on:
   issues:
     types: [opened]
 
-env:
-  ISSUE_NUMBER: ${{ github.event.issue.number }}
-  REPO_OWNER: ${{ github.repository_owner }}
-  REPO_NAME: ${{ github.event.repository.name }}
-  PR_BRANCH: custom-model/issue-${{ github.event.issue.number }}
-
 jobs:
-  parse-and-add:
+  call-reusable-workflow:
     if: contains(github.event.issue.labels.*.name, 'custom-model')
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Build processor tool
-        run: cargo build --release
-
-      - name: Process issue
-        id: process
-        run: |
-          set -euo pipefail
-          
-          ISSUE_BODY=$(cat << 'ISSUE_EOF'
-          ${{ github.event.issue.body }}
-          ISSUE_EOF
-          )
-          
-          # Process entire issue (download, validate, add model, generate preview)
-          OUTPUT=$(./target/release/processor runner process-issue \
-            --issue-number ${{ env.ISSUE_NUMBER }} \
-            --body "$ISSUE_BODY" 2>&1)
-          
-          EXIT_CODE=$?
-          
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "error_occurred=true" >> $GITHUB_OUTPUT
-            echo "error_message<<EOF" >> $GITHUB_OUTPUT
-            echo "$OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          # Extract preview URL and custom model data from output
-          PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
-          CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
-          
-          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-          echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
-          
-          echo "✓ Issue処理完了"
-
-      - name: Create Pull Request
-        id: create_pr
-        if: success()
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ env.ISSUE_NUMBER }})"
-          title: "✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }}"
-          body: |
-            ## 🎨 カスタムモデルデータの追加
-
-            Resolves #${{ env.ISSUE_NUMBER }}
-
-            ### プレビュー（256×256、ピクセルパーフェクト）
-
-            ![${{ steps.process.outputs.custom_model_data }}](${{ steps.process.outputs.preview_url }})
-
-            ---
-
-            *このPRはGitHub Actionsにより自動生成されました。*
-          branch: ${{ env.PR_BRANCH }}
-          delete-branch: true
-          committer: GitHub Actions Bot <actions@github.com>
-          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
-
-      - name: Post success comment
-        if: steps.create_pr.outputs.pull-request-number
-        run: |
-          ./target/release/processor runner post-success \
-            --issue-number ${{ env.ISSUE_NUMBER }} \
-            --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
-            --preview-url "${{ steps.process.outputs.preview_url }}"
-
-      - name: Post failure comment
-        if: failure()
-        run: |
-          ERROR_MSG="${{ steps.process.outputs.error_message }}"
-          if [ -z "$ERROR_MSG" ]; then
-            ERROR_MSG="処理中に予期しないエラーが発生しました。"
-          fi
-          
-          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          ./target/release/processor runner post-failure \
-            --issue-number ${{ env.ISSUE_NUMBER }} \
-            --error-message "$ERROR_MSG" \
-            --workflow-url "$WORKFLOW_URL"
+    uses: ./.github/workflows/reusable-process-issue.yml
+    with:
+      issue-type: 'add'
+      issue-body: ${{ github.event.issue.body }}
+      issue-number: ${{ github.event.issue.number }}
+      actor: ${{ github.actor }}
+      actor-id: ${{ github.actor_id }}
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}

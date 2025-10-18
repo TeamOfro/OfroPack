@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #1a1d21;
+  --color-card-bg: #2c313a;
+  --color-primary: #4caf50;
+  --color-primary-hover: #5cb85c;
+  --color-muted: #a0a0a0;
+  --color-border: #373c47;;
+  --font-family-sans: 'Noto Sans JP', sans-serif;
+  --font-family-mono: 'Roboto Mono', monospace;
+}
+
+html {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}

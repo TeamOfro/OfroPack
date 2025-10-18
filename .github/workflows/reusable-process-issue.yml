@@ -1,0 +1,164 @@
+name: Reusable Process Issue
+
+on:
+  workflow_call:
+    inputs:
+      issue-type:
+        required: true
+        type: string
+      issue-body:
+        required: true
+        type: string
+      issue-number:
+        required: true
+        type: string
+      actor:
+        required: true
+        type: string
+      actor-id:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Build processor tool
+        run: cargo build --release
+
+      - name: Process issue
+        id: process
+        run: |
+          set -euo pipefail
+
+          ISSUE_BODY=$(cat << 'ISSUE_EOF'
+          ${{ inputs.issue-body }}
+          ISSUE_EOF
+          )
+
+          OUTPUT=$(./target/release/processor runner process-issue \
+            --issue-type ${{ inputs.issue-type }} \
+            --issue-number ${{ inputs.issue-number }} \
+            --body "$ISSUE_BODY" 2>&1)
+
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "error_occurred=true" >> $GITHUB_OUTPUT
+            echo "error_message<<EOF" >> $GITHUB_OUTPUT
+            echo "$OUTPUT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
+          CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
+
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
+
+      - name: Set PR details for 'add'
+        if: inputs.issue-type == 'add'
+        id: pr_details_add
+        run: |
+          echo "commit_message=カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "title=✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+          BODY=$(cat <<EOF
+          ## 🎨 カスタムモデルデータの追加
+
+          Resolves #${{ inputs.issue-number }}
+
+          ### プレビュー（256×256、ピクセルパーフェクト）
+
+          ![${{ steps.process.outputs.custom_model_data }}](${{ steps.process.outputs.preview_url }})
+
+          ---
+
+          *このPRはGitHub Actionsにより自動生成されました。*
+          EOF
+          )
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Set PR details for 'extend'
+        if: inputs.issue-type == 'extend'
+        id: pr_details_extend
+        run: |
+          echo "commit_message=マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "title=🔧 マテリアルを拡張: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+          BODY=$(cat <<EOF
+          ## 🔧 カスタムモデルデータの拡張
+
+          Resolves #${{ inputs.issue-number }}
+
+          既存のカスタムモデル `${{ steps.process.outputs.custom_model_data }}` に新しいマテリアルを追加しました。
+
+          ---
+
+          *このPRはGitHub Actionsにより自動生成されました。*
+          EOF
+          )
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: create_pr
+        if: success()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.token }}
+          commit-message: ${{ steps.pr_details_add.outputs.commit_message || steps.pr_details_extend.outputs.commit_message }}
+          title: ${{ steps.pr_details_add.outputs.title || steps.pr_details_extend.outputs.title }}
+          body: ${{ steps.pr_details_add.outputs.body || steps.pr_details_extend.outputs.body }}
+          branch: ${{ inputs.issue-type }}-model/issue-${{ inputs.issue-number }}
+          delete-branch: true
+          committer: GitHub Actions Bot <actions@github.com>
+          author: ${{ inputs.actor }} <${{ inputs.actor-id }}+${{ inputs.actor }}@users.noreply.github.com>
+
+      - name: Post success comment
+        if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'add'
+        run: |
+          ./target/release/processor runner post-success \
+            --issue-number ${{ inputs.issue-number }} \
+            --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
+            --preview-url "${{ steps.process.outputs.preview_url }}"
+
+      - name: Post extend success comment
+        if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'extend'
+        run: |
+          ./target/release/processor runner post-extend-success \
+            --issue-number ${{ inputs.issue-number }} \
+            --pr-number ${{ steps.create_pr.outputs.pull-request-number }}
+
+      - name: Post failure comment
+        if: failure()
+        run: |
+          ERROR_MSG="${{ steps.process.outputs.error_message }}"
+          if [ -z "$ERROR_MSG" ]; then
+            ERROR_MSG="処理中に予期しないエラーが発生しました。"
+          fi
+
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          ./target/release/processor runner post-failure \
+            --issue-number ${{ inputs.issue-number }} \
+            --error-message "$ERROR_MSG" \
+            --workflow-url "$WORKFLOW_URL"
