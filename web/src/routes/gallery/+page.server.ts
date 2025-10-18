@@ -1,8 +1,8 @@
-import type { ModelsJson } from '$lib/types';
+import type { ModelData, ModelsJson } from '$lib/types';
 import type { PageServerLoad } from './$types';
 import { readFile } from 'node:fs/promises';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async (): Promise<{ models: ModelData[]; error?: string | undefined }> => {
   try {
     const data = JSON.parse(await readFile('static/models.json', 'utf-8')) as ModelsJson;
     return { models: data.models };
