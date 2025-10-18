@@ -16,8 +16,7 @@ const config = {
       handleHttpError: ({ path, message }) => {
         // Ignore 404 errors for files that will be generated/available at runtime
         if (path.startsWith('/assets/minecraft/textures/')
-          || path === '/OfroPack.zip'
-          || path === '/hash.txt') {
+          || path === '/OfroPack.zip') {
           return;
         }
         throw new Error(message);

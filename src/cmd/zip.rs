@@ -36,23 +36,25 @@ impl Run for GenerateZip {
             ))?;
         }
 
-        // Build zip command
-        let mut cmd = Command::new("zip");
-        cmd.arg("-r").arg(&self.output);
+        {
+            // Build zip command
+            let mut cmd = Command::new("zip");
+            cmd.arg("-r").arg(&self.output);
 
-        // Add all files
-        for file in &self.files {
-            cmd.arg(file);
-        }
+            // Add all files
+            for file in &self.files {
+                cmd.arg(file);
+            }
 
-        // Execute zip command
-        let output = cmd.output().context("zipコマンドの実行に失敗")?;
+            // Execute zip command
+            let output = cmd.output().context("zipコマンドの実行に失敗")?;
 
-        if !output.status.success() {
-            anyhow::bail!(
-                "Zipの作成に失敗:\n{}",
-                String::from_utf8_lossy(&output.stderr)
-            );
+            if !output.status.success() {
+                anyhow::bail!(
+                    "Zipの作成に失敗:\n{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
         }
 
         // Get file size

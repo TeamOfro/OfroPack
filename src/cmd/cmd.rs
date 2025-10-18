@@ -13,11 +13,9 @@ pub enum Cmd {
     GenerateGallery(GenerateGallery),
     GenerateMetadata(GenerateMetadata),
     GenerateZip(GenerateZip),
-    Generates(Generates),
     Runner(Runner),
 }
 
-use super::generates::Generates;
 use super::metadata::GenerateMetadata;
 use super::zip::GenerateZip;
 

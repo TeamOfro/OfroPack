@@ -29,83 +29,32 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Get latest merged PR
-        id: latest_pr
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const commits = await github.rest.repos.listCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: 'main',
-              per_page: 50
-            });
-
-            for (const commit of commits.data) {
-              const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: commit.sha
-              });
-
-              const mergedPR = prs.data.find(pr => pr.merged_at !== null);
-              if (mergedPR) {
-                core.setOutput('pr_number', mergedPR.number);
-                core.setOutput('pr_title', mergedPR.title);
-                core.setOutput('pr_url', mergedPR.html_url);
-                console.log(`Found latest merged PR: #${mergedPR.number} - ${mergedPR.title}`);
-                return;
-              }
-            }
-
-            core.setOutput('pr_number', '');
-            core.setOutput('pr_title', '');
-            core.setOutput('pr_url', '');
-            console.log('No merged PR found');
-
       - name: Build Rust CLI tool
         run: cargo build --release
 
-      - name: Generate gallery data
-        id: gallery
+      - name: Generate gallery, metadata, and resource pack
+        id: generate
         run: |
-          ./target/release/processor generate-gallery -o models.json
+          # TODO:
+          # ./target/release/processor generates \
+          #   --repo-owner "${{ github.repository_owner }}" \
+          #   --repo-name "${{ github.event.repository.name }}"
+
           MODEL_COUNT=$(jq '.count' models.json)
           echo "model_count=$MODEL_COUNT" >> $GITHUB_OUTPUT
 
-      - name: Create resource pack
-        id: pack
-        run: |
-          zip -r OfroPack.zip assets/ pack.mcmeta pack.png
-          SHA1=$(sha1sum OfroPack.zip | awk '{print $1}')
+          SHA1=$(jq -r '.sha1' metadata.json)
           echo "sha1=$SHA1" >> $GITHUB_OUTPUT
-          SIZE=$(stat -f%z OfroPack.zip 2>/dev/null || stat -c%s OfroPack.zip)
+
+          SIZE=$(jq '.size' metadata.json)
           echo "size=$SIZE" >> $GITHUB_OUTPUT
-          echo "Resource pack created: $SIZE bytes, SHA1: $SHA1"
 
       - name: Prepare public directory
         run: |
           mkdir -p public/preview
           mv OfroPack.zip public/
           mv models.json public/
-
-          echo "${{ steps.pack.outputs.sha1 }}" > public/hash.txt
-
-          cat > public/metadata.json << 'JSONEOF'
-          {
-            "version": "$(date +%Y%m%d-%H%M%S)",
-            "sha1": "${{ steps.pack.outputs.sha1 }}",
-            "size": ${{ steps.pack.outputs.size }},
-            "commit": "${{ github.sha }}",
-            "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "download_url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/OfroPack.zip",
-            "latest_pr": {
-              "number": "${{ steps.latest_pr.outputs.pr_number }}",
-              "title": "${{ steps.latest_pr.outputs.pr_title }}",
-              "url": "${{ steps.latest_pr.outputs.pr_url }}"
-            }
-          }
-          JSONEOF
+          mv metadata.json public/
 
           cp index.html gallery.html model.html public/
 
@@ -151,8 +100,8 @@ jobs:
           echo "**ギャラリー URL:**" >> $GITHUB_STEP_SUMMARY
           echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/gallery.html" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**モデル数:** ${{ steps.gallery.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**モデル数:** ${{ steps.generate.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**SHA1:** \`${{ steps.pack.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA1:** \`${{ steps.generate.outputs.sha1 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**サイズ:** $((${{ steps.pack.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
+          echo "**サイズ:** $((${{ steps.generate.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
