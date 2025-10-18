@@ -78,6 +78,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**カスタムモデル数:** ${{ steps.generate.outputs.model_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "****リソースパック SHA-1 ハッシュ:** ${{ steps.generate.outputs.sha1 }}" >> $GITHUB_STEP_SUMMARY
+          echo "**リソースパック SHA-1 ハッシュ:** ${{ steps.generate.outputs.sha1 }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**リソースパック サイズ:** $((${{ steps.generate.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
