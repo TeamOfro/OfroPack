@@ -45,8 +45,6 @@ jobs:
       - name: Process issue
         id: process
         run: |
-          set -euo pipefail
-
           ISSUE_BODY=$(cat << 'ISSUE_EOF'
           ${{ inputs.issue-body }}
           ISSUE_EOF
@@ -66,6 +64,8 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
+
+          set -euo pipefail
 
           PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
           CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
