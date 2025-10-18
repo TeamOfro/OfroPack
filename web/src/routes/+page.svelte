@@ -1,15 +1,14 @@
 <script lang='ts'>
   import type { PageData } from './$types';
+  import InfoCard from '$lib/components/InfoCard.svelte';
 
   const { data }: { data: PageData } = $props();
 
   const { metadata, error } = data;
 
-  const errorText = 'N/A';
-  const size = metadata ? `${(metadata.size / 1024).toFixed(2)} KB` : errorText;
-  const updated = metadata ? new Date(metadata.updated_at).toLocaleString('ja-JP') : errorText;
-  const latestPr = metadata?.latest_pr;
-  const sha1 = metadata?.sha1 || errorText;
+  const size = metadata ? `${(metadata.size / 1024).toFixed(2)} KB` : undefined;
+  const updated = metadata ? new Date(metadata.updated_at).toLocaleString('ja-JP') : undefined;
+  const sha1 = metadata?.sha1;
 
   function copyToClipboard(text: string, button: HTMLButtonElement) {
     navigator.clipboard
@@ -56,32 +55,31 @@
   </nav>
 
   <section class='info-grid mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3' aria-label='パック情報'>
-    <div class='bg-[#373c47] p-4 rounded-lg'>
-      <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>サイズ</h3>
-      <p class='m-0 text-base font-bold break-words'>{size}</p>
-    </div>
-    <div class='bg-[#373c47] p-4 rounded-lg'>
-      <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>最終更新</h3>
-      <p class='m-0 text-base font-bold break-words'>{updated}</p>
-    </div>
-    <div class='bg-[#373c47] p-4 rounded-lg'>
-      <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>最新 PR</h3>
-      <p class='m-0 text-base font-bold break-words'>
-        {#if latestPr?.number}
-          <a href={latestPr.url} target='_blank' rel='noopener' class='text-primary no-underline font-bold transition-colors duration-300 hover:text-primary-hover hover:underline'>#{latestPr.number}</a>
-        {:else}
-          {errorText}
-        {/if}
-      </p>
-    </div>
+    <InfoCard title='サイズ'>
+      {size || 'N/A'}
+    </InfoCard>
+    <InfoCard title='最終更新'>
+      {updated || 'N/A'}
+    </InfoCard>
+    <InfoCard title='最新 PR'>
+      {#if metadata?.latest_pr}
+        <a href={metadata.latest_pr.url} target='_blank' rel='noopener' class='text-primary no-underline font-bold transition-colors duration-300 hover:text-primary-hover hover:underline'>
+          #{metadata.latest_pr.number}
+        </a>
+      {:else}
+        N/A
+      {/if}
+    </InfoCard>
   </section>
 
   <section aria-label='ダウンロードリンク'>
     <div class='bg-[#373c47] p-4 rounded-lg mb-2.5'>
       <h3 class='mt-0 mb-2 text-sm text-muted uppercase'>SHA1 ハッシュ</h3>
       <div class='flex items-center justify-between bg-background p-2 rounded-md'>
-        <code class='font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis'>{sha1}</code>
-        <button class='bg-primary text-white border-none py-1.5 px-2.5 rounded-md cursor-pointer text-sm transition-colors duration-300 whitespace-nowrap hover:bg-primary-hover' onclick={e => copyToClipboard(sha1, e.currentTarget)}>コピー</button>
+        <code class='font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis'>{sha1 || 'N/A'}</code>
+        {#if sha1}
+          <button class='bg-primary text-white border-none py-1.5 px-2.5 rounded-md cursor-pointer text-sm transition-colors duration-300 whitespace-nowrap hover:bg-primary-hover' onclick={e => copyToClipboard(sha1, e.currentTarget)}>コピー</button>
+        {/if}
       </div>
     </div>
   </section>

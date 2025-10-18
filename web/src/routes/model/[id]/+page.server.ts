@@ -1,13 +1,10 @@
 import type { ModelData, ModelsJson } from '$lib/types';
 import type { EntryGenerator, PageServerLoad } from './$types';
+import { readFile } from 'node:fs/promises';
 
-export const load: PageServerLoad = async ({ params, fetch }) => {
+export const load: PageServerLoad = async ({ params }) => {
   try {
-    const response = await fetch('/models.json');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch models.json: ${response.statusText}`);
-    }
-    const data = (await response.json()) as ModelsJson;
+    const data = JSON.parse(await readFile('static/models.json', 'utf-8')) as ModelsJson;
     const model = data.models.find((m: ModelData) => m.name === params.id);
 
     if (!model) {

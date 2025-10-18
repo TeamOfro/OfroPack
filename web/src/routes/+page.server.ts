@@ -1,13 +1,10 @@
 import type { MetadataJson } from '$lib/types';
 import type { PageServerLoad } from './$types';
+import { readFile } from 'node:fs/promises';
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async () => {
   try {
-    const response = await fetch('/metadata.json');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch metadata.json: ${response.statusText}`);
-    }
-    const metadata = (await response.json()) as MetadataJson;
+    const metadata = JSON.parse(await readFile('static/metadata.json', 'utf-8')) as MetadataJson;
     return { metadata };
   }
   catch (e) {

@@ -1,14 +1,10 @@
 import type { ModelsJson } from '$lib/types';
 import type { PageServerLoad } from './$types';
+import { readFile } from 'node:fs/promises';
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async () => {
   try {
-    // Fetch from static files (will be available at build time)
-    const response = await fetch('/models.json');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch models.json: ${response.statusText}`);
-    }
-    const data = (await response.json()) as ModelsJson;
+    const data = JSON.parse(await readFile('static/models.json', 'utf-8')) as ModelsJson;
     return { models: data.models };
   }
   catch (e) {
