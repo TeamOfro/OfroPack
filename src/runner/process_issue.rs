@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use std::path::PathBuf;
 
 use super::{GitHubClient, ImageDownloader, IssueParser, PreviewGenerator};
+use crate::constants::{REPO_NAME, REPO_OWNER};
 use crate::processor::Processor;
 use crate::runner::issue_parser::ParsedIssueData;
 
@@ -88,16 +89,12 @@ impl IssueProcessor {
                     .context("プレビュー画像の生成に失敗しました")?;
 
                 // Get environment variables for URL generation
-                let repo_owner =
-                    std::env::var("REPO_OWNER").unwrap_or_else(|_| "unknown".to_string());
-                let repo_name =
-                    std::env::var("REPO_NAME").unwrap_or_else(|_| "unknown".to_string());
                 let pr_branch = std::env::var("PR_BRANCH")
                     .unwrap_or_else(|_| format!("custom-model/issue-{}", issue_number));
 
                 let preview_url = PreviewGenerator::generate_url(
-                    &repo_owner,
-                    &repo_name,
+                    REPO_OWNER,
+                    REPO_NAME,
                     &pr_branch,
                     &preview_path,
                 );

@@ -30,10 +30,6 @@ impl GitHubClient {
     pub fn from_env() -> Result<Self> {
         let token =
             std::env::var("GITHUB_TOKEN").context("GITHUB_TOKEN environment variable not set")?;
-        let owner =
-            std::env::var("REPO_OWNER").context("REPO_OWNER environment variable not set")?;
-        let repo = std::env::var("REPO_NAME").context("REPO_NAME environment variable not set")?;
-
         let client = Client::builder()
             .user_agent("OfroPack-GitHub-Actions")
             .build()
@@ -42,8 +38,8 @@ impl GitHubClient {
         Ok(Self {
             client,
             token,
-            owner,
-            repo,
+            owner: crate::constants::REPO_OWNER.to_string(),
+            repo: crate::constants::REPO_NAME.to_string(),
         })
     }
 

@@ -1,5 +1,12 @@
 use std::path::PathBuf;
 
+pub const REPO_OWNER: &str = "TeamOfro";
+pub const REPO_NAME: &str = "OfroPack";
+
+pub fn repo_url(owner: &str, name: &str) -> String {
+    format!("https://github.com/{}/{}", owner, name)
+}
+
 pub struct Paths;
 
 impl Paths {

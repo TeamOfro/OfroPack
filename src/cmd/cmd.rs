@@ -1,5 +1,6 @@
 #![allow(clippy::module_inception)]
 
+use crate::constants::{REPO_NAME, REPO_OWNER};
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -171,15 +172,15 @@ pub enum RunnerSubcommands {
         preview_dir: PathBuf,
 
         /// Repository owner (for URL generation)
-        #[arg(long)]
-        repo_owner: Option<String>,
+        #[arg(long, default_value = REPO_OWNER)]
+        repo_owner: String,
 
         /// Repository name (for URL generation)
-        #[arg(long)]
-        repo_name: Option<String>,
+        #[arg(long, default_value = REPO_NAME)]
+        repo_name: String,
 
         /// Branch name (for URL generation)
-        #[arg(long)]
-        branch: Option<String>,
+        #[arg(long, default_value = "main")]
+        branch: String,
     },
 }

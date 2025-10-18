@@ -50,9 +50,9 @@ impl Run for Runner {
                 source,
                 model_name,
                 preview_dir,
-                repo_owner.as_deref(),
-                repo_name.as_deref(),
-                branch.as_deref(),
+                repo_owner,
+                repo_name,
+                branch,
             ),
         }
     }

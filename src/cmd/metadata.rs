@@ -1,3 +1,4 @@
+use crate::constants::{REPO_NAME, REPO_OWNER, repo_url};
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -14,7 +15,6 @@ pub struct Metadata {
     size: u64,
     commit: String,
     updated_at: String,
-    download_url: String,
     latest_pr: Option<LatestPr>,
 }
 
@@ -36,12 +36,12 @@ pub struct GenerateMetadata {
     pub zip: PathBuf,
 
     /// GitHub Repository owner (for download URL)
-    #[arg(long)]
-    pub repo_owner: Option<String>,
+    #[arg(long, default_value = REPO_OWNER)]
+    pub repo_owner: String,
 
     /// GitHub Repository name (for download URL)
-    #[arg(long)]
-    pub repo_name: Option<String>,
+    #[arg(long, default_value = REPO_NAME)]
+    pub repo_name: String,
 }
 
 impl Run for GenerateMetadata {
@@ -82,20 +82,12 @@ impl Run for GenerateMetadata {
             println!("  ✓ 最新PR: #{} - {}", pr.number, pr.title);
         }
 
-        // Generate download URL
-        let download_url = if let (Some(owner), Some(repo)) = (&self.repo_owner, &self.repo_name) {
-            format!("https://{}.github.io/{}/OfroPack.zip", owner, repo)
-        } else {
-            "OfroPack.zip".to_string()
-        };
-
         let metadata = Metadata {
             version,
             sha1,
             size,
             commit,
             updated_at,
-            download_url,
             latest_pr,
         };
 
@@ -192,13 +184,11 @@ impl GenerateMetadata {
                         "No title".to_string()
                     };
 
-                    // Generate PR URL
-                    let url = if let (Some(owner), Some(repo)) = (&self.repo_owner, &self.repo_name)
-                    {
-                        format!("https://github.com/{}/{}/pull/{}", owner, repo, number)
-                    } else {
-                        format!("#{}", number)
-                    };
+                    let url = format!(
+                        "{}/pull/{}",
+                        repo_url(&self.repo_owner, &self.repo_name),
+                        number
+                    );
 
                     return Ok(Some(LatestPr { number, title, url }));
                 }

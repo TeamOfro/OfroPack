@@ -20,7 +20,6 @@ export interface MetadataJson {
   size: number;
   updated_at: string;
   sha1: string;
-  download_url: string;
   latest_pr?: {
     number: number;
     url: string;

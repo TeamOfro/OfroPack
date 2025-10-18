@@ -6,8 +6,6 @@ on:
 
 env:
   ISSUE_NUMBER: ${{ github.event.issue.number }}
-  REPO_OWNER: ${{ github.repository_owner }}
-  REPO_NAME: ${{ github.event.repository.name }}
   PR_BRANCH: custom-model/issue-${{ github.event.issue.number }}
 
 jobs:
@@ -35,19 +33,19 @@ jobs:
         id: process
         run: |
           set -euo pipefail
-          
+
           ISSUE_BODY=$(cat << 'ISSUE_EOF'
           ${{ github.event.issue.body }}
           ISSUE_EOF
           )
-          
+
           # Process entire issue (download, validate, add model, generate preview)
           OUTPUT=$(./target/release/processor runner process-issue \
             --issue-number ${{ env.ISSUE_NUMBER }} \
             --body "$ISSUE_BODY" 2>&1)
-          
+
           EXIT_CODE=$?
-          
+
           if [ $EXIT_CODE -ne 0 ]; then
             echo "error_occurred=true" >> $GITHUB_OUTPUT
             echo "error_message<<EOF" >> $GITHUB_OUTPUT
@@ -55,14 +53,14 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
-          
+
           # Extract preview URL and custom model data from output
           PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
           CUSTOM_MODEL_DATA=$(echo "$OUTPUT" | grep "^CUSTOM_MODEL_DATA=" | cut -d= -f2-)
-          
+
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
-          
+
           echo "✓ Issue処理完了"
 
       - name: Create Pull Request
@@ -105,9 +103,9 @@ jobs:
           if [ -z "$ERROR_MSG" ]; then
             ERROR_MSG="処理中に予期しないエラーが発生しました。"
           fi
-          
+
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
+
           ./target/release/processor runner post-failure \
             --issue-number ${{ env.ISSUE_NUMBER }} \
             --error-message "$ERROR_MSG" \
