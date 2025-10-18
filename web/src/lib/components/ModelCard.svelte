@@ -1,5 +1,6 @@
 <script lang='ts'>
   import type { ModelData } from '$lib/types';
+  import { assetUrl } from '$lib/url';
 
   const { model }: { model: ModelData } = $props();
 
@@ -25,12 +26,12 @@
 <div
   class='model-card overflow-hidden rounded-lg border border-border bg-[#1f2328] transition-all hover:-translate-y-1 hover:border-primary hover:shadow-[0_10px_30px_rgba(0,0,0,0.4)]'
 >
-  <a href={`/model/${model.name}`} class='model-texture-link block'>
+  <a href={assetUrl(`/model/${model.name}`)} class='model-texture-link block'>
     <div
       class='model-texture relative flex h-72 w-full items-center justify-center overflow-hidden border-b border-b-border bg-[#1a1d21]'
     >
       <img
-        src={import.meta.env.BASE_URL + model.texture_url}
+        src={assetUrl(model.texture_url)}
         alt={model.name}
         loading='lazy'
         decoding='async'

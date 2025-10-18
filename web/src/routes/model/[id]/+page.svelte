@@ -1,5 +1,6 @@
 <script lang='ts'>
   import type { PageData } from './$types';
+  import { assetUrl } from '$lib/url';
   import { error } from '@sveltejs/kit';
 
   const { data }: { data: PageData } = $props();
@@ -51,7 +52,7 @@
       <h1 class='font-mono text-3xl font-bold text-primary'>{model.name}</h1>
     </div>
     <nav class='nav' aria-label='ページナビゲーション'>
-      <a href='/gallery' class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 hover:bg-primary hover:text-white'>← ギャラリーに戻る</a>
+      <a href={assetUrl('/gallery')} class='text-primary no-underline py-2.5 px-5 border border-primary rounded-lg transition-all duration-300 hover:bg-primary hover:text-white'>← ギャラリーに戻る</a>
     </nav>
   </header>
 
@@ -60,7 +61,7 @@
       class='model-image-container flex items-center justify-center overflow-hidden rounded-lg border border-border bg-[#1a1d21] p-5'
     >
       <img
-        src={import.meta.env.BASE_URL + model.texture_url}
+        src={assetUrl(model.texture_url)}
         alt={`${model.name}のテクスチャ`}
         class="w-full object-contain [image-rendering:pixelated] {isAnimated ? 'animated' : ''}"
         style={imgStyle}
@@ -72,7 +73,7 @@
         <p class='mb-2'><strong>📅 追加日:</strong> {addedDate}</p>
         <p class='mb-2'>
           <strong>👤 作者:</strong>
-          <a href={`/gallery?author=${encodeURIComponent(model.author)}`} class='text-primary no-underline hover:underline'>
+          <a href={assetUrl(`/gallery?author=${encodeURIComponent(model.author)}`)} class='text-primary no-underline hover:underline'>
             {model.author}
           </a>
         </p>
