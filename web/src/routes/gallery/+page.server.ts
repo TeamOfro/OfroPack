@@ -1,16 +1,18 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import type { PageServerLoad } from './$types';
 import type { ModelsJson } from '$lib/types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-	try {
-		const filePath = path.resolve(process.cwd(), '../models.json');
-		const content = await fs.readFile(filePath, 'utf-8');
-		const data = JSON.parse(content) as ModelsJson;
-		return { models: data.models };
-	} catch (e) {
-		console.error('Failed to load models:', e);
-		return { models: [], error: 'モデルデータの読み込みに失敗しました。' };
-	}
+export const load: PageServerLoad = async ({ fetch }) => {
+  try {
+    // Fetch from static files (will be available at build time)
+    const response = await fetch('/models.json');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch models.json: ${response.statusText}`);
+    }
+    const data = (await response.json()) as ModelsJson;
+    return { models: data.models };
+  }
+  catch (e) {
+    console.error('Failed to load models:', e);
+    return { models: [], error: 'モデルデータの読み込みに失敗しました。' };
+  }
 };
