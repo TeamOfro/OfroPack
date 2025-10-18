@@ -34,6 +34,13 @@
           "type": "minecraft:model",
           "model": "item/survival_knife"
         }
+      },
+      {
+        "when": "18th_century_steam",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/18th_century_steam"
+        }
       }
     ]
   }
