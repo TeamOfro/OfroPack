@@ -1,20 +1,20 @@
 use anyhow::{Context, Result, bail};
 use image::GenericImageView;
-use reqwest::blocking::Client;
 use std::fs;
 use std::path::Path;
+use ureq::Agent;
 
 /// Image downloader and validator
 pub struct ImageDownloader {
-    client: Client,
+    client: Agent,
 }
 
 impl ImageDownloader {
     pub fn new() -> Result<Self> {
-        let client = Client::builder()
+        let client = Agent::config_builder()
             .user_agent("OfroPack-Image-Downloader")
             .build()
-            .context("HTTPクライアントの構築に失敗しました")?;
+            .into();
 
         Ok(Self { client })
     }
@@ -23,13 +23,14 @@ impl ImageDownloader {
     pub fn download(&self, url: &str, output_path: &Path) -> Result<()> {
         println!("画像をダウンロード中: {}", url);
 
-        let response = self
+        let mut response = self
             .client
             .get(url)
-            .send()
+            .call()
             .context("画像のダウンロードに失敗しました")?;
 
         let status = response.status();
+
         if !status.is_success() {
             bail!(
                 "画像のダウンロードに失敗しました（HTTPステータス: {}）",
@@ -38,7 +39,8 @@ impl ImageDownloader {
         }
 
         let bytes = response
-            .bytes()
+            .body_mut()
+            .read_to_vec()
             .context("レスポンスの読み取りに失敗しました")?;
 
         // Save to file

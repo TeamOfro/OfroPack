@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
-use reqwest::blocking::Client;
 use serde::Serialize;
+use ureq::Agent;
 
 /// GitHub API client for Actions
 pub struct GitHubClient {
-    client: Client,
+    client: Agent,
     token: String,
     owner: String,
     repo: String,
@@ -30,10 +30,10 @@ impl GitHubClient {
     pub fn from_env() -> Result<Self> {
         let token =
             std::env::var("GITHUB_TOKEN").context("GITHUB_TOKEN environment variable not set")?;
-        let client = Client::builder()
+        let client = Agent::config_builder()
             .user_agent("OfroPack-GitHub-Actions")
             .build()
-            .context("Failed to build HTTP client")?;
+            .into();
 
         Ok(Self {
             client,
@@ -99,19 +99,18 @@ impl GitHubClient {
 
     /// Make POST request to GitHub API
     fn post_request<T: Serialize>(&self, url: &str, body: &T) -> Result<()> {
-        let response = self
+        let mut response = self
             .client
             .post(url)
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
-            .json(body)
-            .send()
+            .send_json(body)
             .context("Failed to send POST request")?;
 
         if !response.status().is_success() {
             let status = response.status();
-            let body = response.text().unwrap_or_default();
+            let body = response.body_mut().read_to_string().unwrap_or_default();
             anyhow::bail!("API request failed ({}): {}", status, body);
         }
 
@@ -120,19 +119,18 @@ impl GitHubClient {
 
     /// Make PATCH request to GitHub API
     fn patch_request<T: Serialize>(&self, url: &str, body: &T) -> Result<()> {
-        let response = self
+        let mut response = self
             .client
             .patch(url)
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
-            .json(body)
-            .send()
+            .send_json(body)
             .context("Failed to send PATCH request")?;
 
         if !response.status().is_success() {
             let status = response.status();
-            let body = response.text().unwrap_or_default();
+            let body = response.body_mut().read_to_string().unwrap_or_default();
             anyhow::bail!("API request failed ({}): {}", status, body);
         }
 
