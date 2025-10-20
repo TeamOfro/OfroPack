@@ -1,4 +1,10 @@
-use crate::constants::{Paths, should_snake_case};
+use anyhow::Context;
+
+use crate::{
+    constants::{Paths, should_snake_case},
+    schema::items::{ItemCase, ItemResource},
+    utils::json::{read_json, write_json},
+};
 
 /// 既存のカスタムモデルデータをまだ適用していないmaterialに適用する
 #[derive(clap::Parser, Debug)]
@@ -45,7 +51,12 @@ impl super::Run for Extend {
                 self.custom_model_data, material
             );
 
-            // TODO: ここで実際にmaterialのJSONファイルを読み込み、custom_model_dataを追加する処理を実装する
+            extend_model(&self.custom_model_data, material).with_context(|| {
+                format!(
+                    "Failed to extend model '{}' with material '{}'",
+                    self.custom_model_data, material
+                )
+            })?;
         }
 
         let added_materials = self.materials.join(", ");
@@ -57,4 +68,33 @@ impl super::Run for Extend {
 
         Ok(())
     }
+}
+
+fn extend_model(custom_model_data: &str, material: &str) -> anyhow::Result<()> {
+    let model_path = Paths::model_path(custom_model_data);
+
+    let mut item_resource = read_json::<ItemResource>(&model_path)
+        .with_context(|| format!("モデルファイルの読み込みに失敗: {}", model_path.display()))?;
+
+    if item_resource
+        .model
+        .cases
+        .iter()
+        .any(|case| case.when == *material)
+    {
+        println!(
+            "  WARN: custom_model_data '{}' はすでに material '{}' に適用されています。",
+            custom_model_data, material
+        );
+        return Ok(());
+    }
+    item_resource
+        .model
+        .cases
+        .push(ItemCase::new(custom_model_data));
+
+    write_json(&model_path, &item_resource)
+        .with_context(|| format!("モデルファイルの書き込みに失敗: {}", model_path.display()))?;
+
+    Ok(())
 }
