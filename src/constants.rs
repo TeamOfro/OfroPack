@@ -24,6 +24,7 @@ impl Paths {
     pub const ITEMS: &str = "assets/minecraft/items";
     pub const MODELS: &str = "assets/minecraft/models/item";
     pub const TEXTURES: &str = "assets/minecraft/textures/item";
+    pub const PREVIEWS: &str = "previews";
 
     pub fn assets_path() -> PathBuf {
         Self::root().join(Self::ASSETS)
@@ -39,6 +40,14 @@ impl Paths {
 
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
+    }
+
+    pub fn relative_preview_path(custom_model_data: &str) -> PathBuf {
+        PathBuf::from(format!("{}/{}.png", Self::PREVIEWS, custom_model_data))
+    }
+
+    pub fn preview_path(custom_model_data: &str) -> PathBuf {
+        Self::root().join(Self::relative_preview_path(custom_model_data))
     }
 }
 
