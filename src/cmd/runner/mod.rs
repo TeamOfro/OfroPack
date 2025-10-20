@@ -1,4 +1,5 @@
 mod comment;
+mod reaction;
 
 #[derive(Debug, clap::Parser)]
 pub struct Runner {
@@ -10,12 +11,14 @@ pub struct Runner {
 #[command(version, about)]
 pub enum RunnerSubcommand {
     Comment(comment::Comment),
+    Reaction(reaction::Reaction),
 }
 
 impl super::Run for RunnerSubcommand {
     fn run(&self) -> anyhow::Result<()> {
         match self {
             RunnerSubcommand::Comment(cmd) => cmd.run(),
+            RunnerSubcommand::Reaction(cmd) => cmd.run(),
         }
     }
 }

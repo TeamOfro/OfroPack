@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use ureq::{Agent, RequestBuilder, typestate::WithBody};
 
-use crate::constants::{REPO_NAME, REPO_OWNER};
+use crate::constants::{GithubReaction, REPO_NAME, REPO_OWNER};
 
 /// GitHub API client for Actions
 pub struct GitHubClient {
@@ -17,7 +17,7 @@ struct CommentRequest {
 
 #[derive(Debug, Serialize)]
 struct ReactionRequest {
-    content: String,
+    content: GithubReaction,
 }
 
 #[derive(Debug, Serialize)]
@@ -59,10 +59,8 @@ impl GitHubClient {
     }
 
     /// Add a reaction to an issue
-    pub fn react_issue(&self, issue_number: u64, reaction: &str) -> Result<()> {
-        let request = ReactionRequest {
-            content: reaction.to_string(),
-        };
+    pub fn react_issue(&self, issue_number: u64, reaction: GithubReaction) -> Result<()> {
+        let request = ReactionRequest { content: reaction };
 
         self.post_request(&GitHubClient::issue_url(issue_number), &request)
             .context("Failed to add reaction")?;
