@@ -17,7 +17,7 @@ impl Paths {
                 return PathBuf::from(test_root);
             }
         }
-        PathBuf::from(".")
+        PathBuf::new()
     }
 
     pub const ASSETS: &str = "assets";
@@ -40,6 +40,14 @@ impl Paths {
 
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
+    }
+
+    pub fn animation_path(custom_model_data: &str) -> PathBuf {
+        Self::root().join(format!(
+            "{}/{}.png.mcmeta",
+            Self::TEXTURES,
+            custom_model_data
+        ))
     }
 
     pub fn relative_preview_path(custom_model_data: &str) -> PathBuf {

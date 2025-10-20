@@ -1,6 +1,7 @@
 mod add;
 mod extend;
 mod metadata;
+mod models;
 mod runner;
 mod zip;
 
@@ -10,7 +11,7 @@ mod zip;
 pub enum Cmd {
     Add(add::Add),
     Extend(extend::Extend),
-    // Models(Models),
+    Models(models::Models),
     Metadata(metadata::Metadata),
     Zip(zip::Zip),
     Runner(runner::Runner),
@@ -25,7 +26,7 @@ impl Run for Cmd {
         match self {
             Cmd::Add(cmd) => cmd.run(),
             Cmd::Extend(cmd) => cmd.run(),
-            // Cmd::Models(cmd) => cmd.run(),
+            Cmd::Models(cmd) => cmd.run(),
             Cmd::Metadata(cmd) => cmd.run(),
             Cmd::Zip(cmd) => cmd.run(),
             Cmd::Runner(cmd) => cmd.run(),
