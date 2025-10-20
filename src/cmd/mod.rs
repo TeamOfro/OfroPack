@@ -1,5 +1,6 @@
 mod add;
 mod extend;
+mod metadata;
 mod zip;
 
 /// CLI for OfroPack - Minecraft Resource Pack Manager
@@ -9,7 +10,7 @@ pub enum Cmd {
     Add(add::Add),
     Extend(extend::Extend),
     // GenerateGallery(GenerateGallery),
-    // GenerateMetadata(GenerateMetadata),
+    Metadata(metadata::Metadata),
     Zip(zip::Zip),
     // Generates(Generates),
     // Runner(Runner),
@@ -25,7 +26,7 @@ impl Run for Cmd {
             Cmd::Add(cmd) => cmd.run(),
             Cmd::Extend(cmd) => cmd.run(),
             // Cmd::GenerateGallery(cmd) => cmd.run(),
-            // Cmd::GenerateMetadata(cmd) => cmd.run(),
+            Cmd::Metadata(cmd) => cmd.run(),
             Cmd::Zip(cmd) => cmd.run(),
             // Cmd::Generates(cmd) => cmd.run(),
             // Cmd::Runner(cmd) => cmd.run(),
