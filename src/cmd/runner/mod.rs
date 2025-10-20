@@ -1,3 +1,4 @@
+mod close;
 mod comment;
 mod reaction;
 
@@ -12,6 +13,7 @@ pub struct Runner {
 pub enum RunnerSubcommand {
     Comment(comment::Comment),
     Reaction(reaction::Reaction),
+    Close(close::Close),
 }
 
 impl super::Run for RunnerSubcommand {
@@ -19,6 +21,7 @@ impl super::Run for RunnerSubcommand {
         match self {
             RunnerSubcommand::Comment(cmd) => cmd.run(),
             RunnerSubcommand::Reaction(cmd) => cmd.run(),
+            RunnerSubcommand::Close(cmd) => cmd.run(),
         }
     }
 }
