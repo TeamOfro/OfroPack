@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Animation {
+pub struct AnimationInfo {
     pub animation: AnimationData,
 }
 
