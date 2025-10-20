@@ -1,11 +1,10 @@
 use std::path::PathBuf;
 
+use crate::constcat;
+
 pub const REPO_OWNER: &str = "TeamOfro";
 pub const REPO_NAME: &str = "OfroPack";
-
-pub fn repo_url(owner: &str, name: &str) -> String {
-    format!("https://github.com/{}/{}", owner, name)
-}
+pub const REPO_URL: &str = constcat!("https://github.com/", REPO_OWNER, "/", REPO_NAME);
 
 pub struct Paths;
 
@@ -36,10 +35,4 @@ impl Paths {
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
-pub enum IssueType {
-    Add,
-    Extend,
 }
