@@ -1,12 +1,14 @@
 use std::process::ExitCode;
 
+use clap::Parser;
+use processor::cmd::{Cmd, Run};
+
 pub fn main() -> ExitCode {
-    ExitCode::SUCCESS
-    // match Cmd::parse().run() {
-    //     Ok(()) => ExitCode::SUCCESS,
-    //     Err(e) => {
-    //         _ = writeln!(io::stderr(), "\n❌ エラー:\n{:?}", e);
-    //         ExitCode::FAILURE
-    //     }
-    // }
+    match Cmd::parse().run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            ExitCode::FAILURE
+        }
+    }
 }
