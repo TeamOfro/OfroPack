@@ -20,9 +20,14 @@ impl Paths {
         PathBuf::from(".")
     }
 
+    pub const ASSETS: &str = "assets";
     pub const ITEMS: &str = "assets/minecraft/items";
     pub const MODELS: &str = "assets/minecraft/models/item";
     pub const TEXTURES: &str = "assets/minecraft/textures/item";
+
+    pub fn assets_path() -> PathBuf {
+        Self::root().join(Self::ASSETS)
+    }
 
     pub fn item_path(material: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.json", Self::ITEMS, material))
@@ -34,5 +39,27 @@ impl Paths {
 
     pub fn texture_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
+    }
+}
+
+pub fn is_snake_case(s: &str) -> bool {
+    let mut chars = s.chars();
+    match chars.next() {
+        Some(c) if c.is_ascii_lowercase() || c.is_ascii_digit() => (),
+        _ => return false,
+    }
+    for c in chars {
+        if !(c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_') {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn should_snake_case(s: &str) -> anyhow::Result<()> {
+    if is_snake_case(s) {
+        Ok(())
+    } else {
+        anyhow::bail!("'{}'はスネークケースで指定してください。", s);
     }
 }
