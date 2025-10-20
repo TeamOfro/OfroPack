@@ -10,10 +10,9 @@ mod zip;
 pub enum Cmd {
     Add(add::Add),
     Extend(extend::Extend),
-    // GenerateGallery(GenerateGallery),
+    // Models(Models),
     Metadata(metadata::Metadata),
     Zip(zip::Zip),
-    // Generates(Generates),
     Runner(runner::Runner),
 }
 
@@ -26,10 +25,9 @@ impl Run for Cmd {
         match self {
             Cmd::Add(cmd) => cmd.run(),
             Cmd::Extend(cmd) => cmd.run(),
-            // Cmd::GenerateGallery(cmd) => cmd.run(),
+            // Cmd::Models(cmd) => cmd.run(),
             Cmd::Metadata(cmd) => cmd.run(),
             Cmd::Zip(cmd) => cmd.run(),
-            // Cmd::Generates(cmd) => cmd.run(),
             Cmd::Runner(cmd) => cmd.run(),
         }
     }
