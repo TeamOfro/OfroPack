@@ -7,7 +7,7 @@ use crate::{
     constants::ItemModelParent,
     pipeline::image_validator::ImageValidator,
     schema::animation::{AnimationData, AnimationInfo},
-    utils::{add as helpers},
+    utils::add as helpers,
 };
 
 #[derive(Debug, clap::Parser)]
@@ -56,7 +56,8 @@ impl Run for Model {
             );
         }
 
-        let custom_model_data = helpers::infer_or_validate_name(&self.custom_model_data, &self.path_to_image)?;
+        let custom_model_data =
+            helpers::infer_or_validate_name(&self.custom_model_data, &self.path_to_image)?;
 
         helpers::ensure_not_exists_2d(&custom_model_data)?;
 

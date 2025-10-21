@@ -73,7 +73,10 @@ impl GitHubClient {
         self.post_request(&GitHubClient::reactions_url(issue_number), &request)
             .context("リアクションの追加に失敗しました")?;
 
-        println!("✓ Issue #{} にリアクション '{}' を追加しました", issue_number, reaction);
+        println!(
+            "✓ Issue #{} にリアクション '{}' を追加しました",
+            issue_number, reaction
+        );
         Ok(())
     }
 

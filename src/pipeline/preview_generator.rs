@@ -43,7 +43,9 @@ impl PreviewGenerator {
         // Save as PNG
         resized
             .save_with_format(&preview_path, ImageFormat::Png)
-            .with_context(|| format!("プレビューの保存に失敗しました: {}", preview_path.display()))?;
+            .with_context(|| {
+                format!("プレビューの保存に失敗しました: {}", preview_path.display())
+            })?;
 
         println!("✓ プレビューを生成しました: {}", preview_path.display());
 

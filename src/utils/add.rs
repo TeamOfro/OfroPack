@@ -3,24 +3,39 @@ use std::path::Path;
 use anyhow::Context;
 
 use crate::{
-    constants::{should_snake_case, ItemModelParent, Paths},
+    constants::{ItemModelParent, Paths, should_snake_case},
     schema::{
         items::{ItemCase, ItemResource},
         models::ItemModel,
     },
-    utils::json::{read_json, write_json},
+    utils::{
+        json::{read_json, write_json},
+        materials::MaterialMapping,
+    },
 };
 
 pub fn validate_materials(materials: &[String]) -> anyhow::Result<()> {
     if materials.is_empty() {
         anyhow::bail!("少なくとも1つのmaterialを指定してください。");
     }
-    materials
+    materials.iter().try_for_each(|m| should_snake_case(m))?;
+
+    let mapping = MaterialMapping::load()?;
+    let unknown: Vec<_> = materials
         .iter()
-        .try_for_each(|m| should_snake_case(m))
+        .filter(|m| !mapping.contains(m))
+        .cloned()
+        .collect();
+    if !unknown.is_empty() {
+        anyhow::bail!("未対応のmaterialが指定されました: {}", unknown.join(", "));
+    }
+    Ok(())
 }
 
-pub fn infer_or_validate_name(name: &Option<String>, path_to_image: &Path) -> anyhow::Result<String> {
+pub fn infer_or_validate_name(
+    name: &Option<String>,
+    path_to_image: &Path,
+) -> anyhow::Result<String> {
     let name = match name {
         Some(n) => n.to_lowercase(),
         None => path_to_image
@@ -52,7 +67,10 @@ pub fn ensure_not_exists_2d(custom_model_data: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn write_new_item_model(parent: ItemModelParent, custom_model_data: &str) -> anyhow::Result<()> {
+pub fn write_new_item_model(
+    parent: ItemModelParent,
+    custom_model_data: &str,
+) -> anyhow::Result<()> {
     let model_path = Paths::model_path(custom_model_data);
     let item_model = ItemModel::new(parent, custom_model_data);
     write_json(&model_path, &item_model)
@@ -65,10 +83,15 @@ pub fn update_materials(materials: &[String], custom_model_data: &str) -> anyhow
         let material_path = Paths::item_path(material);
         let mut resource = if material_path.exists() {
             read_json::<ItemResource>(&material_path).with_context(|| {
-                format!("マテリアルファイルの読み込みに失敗: {}", material_path.display())
+                format!(
+                    "マテリアルファイルの読み込みに失敗: {}",
+                    material_path.display()
+                )
             })?
         } else {
-            ItemResource::new(material)
+            let mapping = MaterialMapping::load()?;
+            let fallback = mapping.resolve_fallback_model_path(material)?;
+            ItemResource::new_with_fallback(&fallback)
         };
         resource.add_case(case.clone());
         write_json(&material_path, &resource).with_context(|| {

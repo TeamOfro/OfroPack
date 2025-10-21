@@ -33,6 +33,8 @@ impl Paths {
     pub const TEXTURES: &str = "assets/minecraft/textures/item";
     pub const PREVIEWS: &str = "preview";
 
+    pub const ITEMS_TEXTURES: &str = "items_textures.json";
+
     pub fn assets_path() -> PathBuf {
         Self::root().join(Self::ASSETS)
     }

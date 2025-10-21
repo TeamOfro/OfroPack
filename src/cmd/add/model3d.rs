@@ -4,10 +4,10 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::{should_snake_case, Paths},
+    constants::{Paths, should_snake_case},
     pipeline::image_validator::ImageValidator,
     schema::models::ItemModel,
-    utils::{add as helpers},
+    utils::add as helpers,
     utils::json::{merge_json, read_json, write_json},
 };
 
@@ -72,12 +72,13 @@ impl Run for Model3D {
                 )
             })?;
 
-        let mut model = serde_json::from_value::<ItemModel>(model_value.clone()).with_context(|| {
-            format!(
-                "モデルJSONのパースに失敗: {}",
-                self.model_json_file.to_string_lossy()
-            )
-        })?;
+        let mut model =
+            serde_json::from_value::<ItemModel>(model_value.clone()).with_context(|| {
+                format!(
+                    "モデルJSONのパースに失敗: {}",
+                    self.model_json_file.to_string_lossy()
+                )
+            })?;
 
         let layer_count = model.textures.overwrite(&self.custom_model_data);
         if layer_count != self.layer_images.len() {

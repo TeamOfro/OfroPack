@@ -6,14 +6,14 @@ pub struct ItemResource {
 }
 
 impl ItemResource {
-    pub fn new(material: &str) -> Self {
+    pub fn new_with_fallback(fallback_model: &str) -> Self {
         Self {
             model: ItemResourceModel {
                 r#type: "minecraft:select".to_string(),
                 property: "minecraft:custom_model_data".to_string(),
                 fallback: ItemFallback {
                     r#type: "minecraft:model".to_string(),
-                    model: format!("minecraft:item/{}", material),
+                    model: fallback_model.to_string(),
                 },
                 cases: Vec::new(),
             },

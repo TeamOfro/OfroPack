@@ -28,6 +28,9 @@ impl super::Run for Extend {
             .iter()
             .try_for_each(|material| should_snake_case(material))?;
 
+        // マテリアルの存在検証（items_textures.json に基づく）
+        crate::utils::add::validate_materials(&self.materials)?;
+
         // モデルは存在する必要がある（テクスチャの存在は不要）
         let model_path = Paths::model_path(&self.custom_model_data);
         if !model_path.exists() {
@@ -72,7 +75,9 @@ fn extend_material(custom_model_data: &str, material: &str) -> anyhow::Result<()
             )
         })?
     } else {
-        ItemResource::new(material)
+        let mapping = crate::utils::materials::MaterialMapping::load()?;
+        let fallback = mapping.resolve_fallback_model_path(material)?;
+        ItemResource::new_with_fallback(&fallback)
     };
 
     if item_resource
