@@ -29,7 +29,7 @@ impl GitHubClient {
     /// Create new GitHub client from environment
     pub fn from_env() -> Result<Self> {
         let token =
-            std::env::var("GITHUB_TOKEN").context("GITHUB_TOKEN environment variable not set")?;
+            std::env::var("GITHUB_TOKEN").context("環境変数 GITHUB_TOKEN が設定されていません")?;
         let client = Agent::config_builder()
             .user_agent("OfroPack-GitHub-Actions")
             .build()
@@ -60,9 +60,9 @@ impl GitHubClient {
         };
 
         self.post_request(&GitHubClient::comments_url(issue_number), &request)
-            .context("Failed to post comment")?;
+            .context("コメントの投稿に失敗しました")?;
 
-        println!("✓ Comment posted to issue #{}", issue_number);
+        println!("✓ Issue #{} にコメントを投稿しました", issue_number);
         Ok(())
     }
 
@@ -71,9 +71,9 @@ impl GitHubClient {
         let request = ReactionRequest { content: reaction };
 
         self.post_request(&GitHubClient::reactions_url(issue_number), &request)
-            .context("Failed to add reaction")?;
+            .context("リアクションの追加に失敗しました")?;
 
-        println!("✓ Reaction '{}' added to issue #{}", reaction, issue_number);
+        println!("✓ Issue #{} にリアクション '{}' を追加しました", issue_number, reaction);
         Ok(())
     }
 
@@ -84,9 +84,9 @@ impl GitHubClient {
         };
 
         self.patch_request(&GitHubClient::base_issue_url(issue_number), &request)
-            .context("Failed to close issue")?;
+            .context("Issueのクローズに失敗しました")?;
 
-        println!("✓ Issue #{} closed", issue_number);
+        println!("✓ Issue #{} をクローズしました", issue_number);
         Ok(())
     }
 
@@ -113,12 +113,12 @@ impl GitHubClient {
             .header("Accept", "application/vnd.github+json")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .send_json(body)
-            .with_context(|| format!("Failed to send {} request", method))?;
+            .with_context(|| format!("{} リクエストの送信に失敗しました", method))?;
 
         if !response.status().is_success() {
             let status = response.status();
             let body = response.body_mut().read_to_string().unwrap_or_default();
-            anyhow::bail!("API request failed ({}): {}", status, body);
+            anyhow::bail!("APIリクエストに失敗しました ({}): {}", status, body);
         }
 
         Ok(())

@@ -10,27 +10,27 @@ impl PreviewGenerator {
     /// Generate 256x256 preview from source texture with nearest-neighbor interpolation
     pub fn generate(source: &Path, model_name: &str) -> Result<PathBuf> {
         if !source.exists() {
-            anyhow::bail!("Source texture not found: {}", source.display());
+            anyhow::bail!("元テクスチャが見つかりません: {}", source.display());
         }
 
         let preview_path = Paths::preview_path(model_name);
 
         let preview_dir = preview_path
             .parent()
-            .context("Failed to get preview directory")?;
+            .context("プレビューディレクトリの取得に失敗しました")?;
 
         std::fs::create_dir_all(preview_dir).with_context(|| {
             format!(
-                "Failed to create preview directory: {}",
+                "プレビューディレクトリの作成に失敗しました: {}",
                 preview_dir.display()
             )
         })?;
 
         // Load source image
         let img = ImageReader::open(source)
-            .with_context(|| format!("Failed to open source image: {}", source.display()))?
+            .with_context(|| format!("画像の読み込みに失敗しました: {}", source.display()))?
             .decode()
-            .context("Failed to decode image")?;
+            .context("画像のデコードに失敗しました")?;
 
         // Resize to 256x256 with nearest-neighbor (pixel-perfect for Minecraft textures)
         let resized = image::imageops::resize(
@@ -43,9 +43,9 @@ impl PreviewGenerator {
         // Save as PNG
         resized
             .save_with_format(&preview_path, ImageFormat::Png)
-            .with_context(|| format!("Failed to save preview: {}", preview_path.display()))?;
+            .with_context(|| format!("プレビューの保存に失敗しました: {}", preview_path.display()))?;
 
-        println!("✓ Preview generated: {}", preview_path.display());
+        println!("✓ プレビューを生成しました: {}", preview_path.display());
 
         Ok(preview_path)
     }

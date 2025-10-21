@@ -4,7 +4,7 @@ use crate::cmd::Run;
 
 #[derive(clap::Parser, Debug)]
 pub struct Close {
-    /// Issue number
+    /// Issue番号
     #[arg(long)]
     issue_number: u64,
 }
@@ -14,7 +14,7 @@ impl Run for Close {
         let github_client = crate::pipeline::github_client::GitHubClient::from_env()?;
         github_client
             .close_issue(self.issue_number)
-            .context("Failed to close GitHub issue")?;
+            .context("GitHub Issueのクローズに失敗しました")?;
         Ok(())
     }
 }

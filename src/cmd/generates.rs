@@ -10,17 +10,17 @@ impl Run for Generates {
     fn run(&self) -> Result<()> {
         println!("📦 リソースパックを圧縮中...");
         Cmd::try_parse_from(["", "zip"])
-            .with_context(|| "Failed to parse 'zip' command")?
+            .with_context(|| "'zip' コマンドの解析に失敗しました")?
             .run()?;
 
         println!("🎨 ギャラリーデータを生成中...");
         Cmd::try_parse_from(["", "models"])
-            .with_context(|| "Failed to parse 'models' command")?
+            .with_context(|| "'models' コマンドの解析に失敗しました")?
             .run()?;
 
         println!("📝 メタデータを生成中...");
         Cmd::try_parse_from(["", "metadata"])
-            .with_context(|| "Failed to parse 'metadata' command")?
+            .with_context(|| "'metadata' コマンドの解析に失敗しました")?
             .run()?;
 
         Ok(())

@@ -39,13 +39,13 @@ impl super::Run for Extend {
 
         for material in &self.materials {
             println!(
-                "Adding custom_model_data '{}' to material '{}'",
-                self.custom_model_data, material
+                "マテリアル '{}' に custom_model_data '{}' を追加します...",
+                material, self.custom_model_data
             );
 
             extend_material(&self.custom_model_data, material).with_context(|| {
                 format!(
-                    "Failed to extend material '{}' with custom_model_data '{}'",
+                    "マテリアル '{}' への custom_model_data '{}' の追加に失敗しました",
                     material, self.custom_model_data
                 )
             })?;
@@ -53,7 +53,7 @@ impl super::Run for Extend {
 
         let added_materials = self.materials.join(", ");
         println!(
-            "Successfully extended materials [{}] with custom_model_data '{}'",
+            "✓ マテリアル [{}] に custom_model_data '{}' を追加しました",
             added_materials, self.custom_model_data
         );
 

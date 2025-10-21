@@ -9,14 +9,14 @@ use processor::{
 pub fn main() -> ExitCode {
     if !Paths::assets_path().exists() {
         eprint!(
-            "Error: 'assets'ディレクトリが存在しません。OfroPackプロジェクトのルートディレクトリでコマンドを実行してください。"
+            "エラー: 'assets' ディレクトリが存在しません。OfroPackプロジェクトのルートディレクトリでコマンドを実行してください。"
         );
     }
 
     match Cmd::parse().run() {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("Error: {e}");
+            eprintln!("エラー: {e}");
             ExitCode::FAILURE
         }
     }

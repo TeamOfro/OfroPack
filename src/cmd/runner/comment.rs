@@ -4,11 +4,11 @@ use crate::cmd::Run;
 
 #[derive(clap::Parser, Debug)]
 pub struct Comment {
-    /// Issue number
+    /// Issue番号
     #[arg(long)]
     issue_number: u64,
 
-    /// Comment body (Markdown format)
+    /// コメント本文（Markdown）
     #[arg(long)]
     body: String,
 }
@@ -18,7 +18,7 @@ impl Run for Comment {
         let github_client = crate::pipeline::github_client::GitHubClient::from_env()?;
         github_client
             .comment_issue(self.issue_number, &self.body)
-            .context("Failed to post comment to GitHub issue")?;
+            .context("GitHub Issueへのコメント投稿に失敗しました")?;
         Ok(())
     }
 }
