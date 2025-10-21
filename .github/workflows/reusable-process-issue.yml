@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       issue-type:
-        description: '処理タイプ（add: 新規追加, extend: マテリアル拡張）'
+        description: '処理タイプ（model: 2Dモデル追加, model3d: 3Dモデル追加, extend: マテリアル拡張）'
         required: true
         type: string
       issue-body:
@@ -92,14 +92,14 @@ jobs:
             echo "added_materials=$ADDED_MATERIALS" >> $GITHUB_OUTPUT
           fi
 
-      - name: 📝 プルリクエストの内容を準備（新規追加）
-        if: inputs.issue-type == 'add'
-        id: pr_details_add
+      - name: 📝 プルリクエストの内容を準備（2Dモデル）
+        if: inputs.issue-type == 'model'
+        id: pr_details_model
         run: |
-          echo "commit_message=✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
-          echo "title=✨ カスタムモデルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+          echo "commit_message=✨ 2Dモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "title=✨ 2Dモデルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
           BODY=$(cat <<EOF
-          ## 🎨 カスタムモデルデータを追加しました
+          ## 🎨 2Dカスタムモデルを追加しました
 
           Resolves #${{ inputs.issue-number }}
 
@@ -123,6 +123,35 @@ jobs:
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 📝 プルリクエストの内容を準備（3Dモデル）
+        if: inputs.issue-type == 'model3d'
+        id: pr_details_model3d
+        run: |
+          echo "commit_message=✨ 3Dモデルを追加: ${{ steps.process.outputs.custom_model_data }} (#${{ inputs.issue-number }})" >> $GITHUB_OUTPUT
+          echo "title=✨ 3Dモデルを追加: ${{ steps.process.outputs.custom_model_data }}" >> $GITHUB_OUTPUT
+          BODY=$(cat <<EOF
+          ## 🎨 3Dカスタムモデルを追加しました
+
+          Resolves #${{ inputs.issue-number }}
+
+          ---
+
+          ### ℹ️  自動生成された内容
+
+          - ✅ モデルファイル（\`assets/minecraft/models/item/${{ steps.process.outputs.custom_model_data }}.json\`）
+          - ✅ テクスチャファイル（\`assets/minecraft/textures/item/${{ steps.process.outputs.custom_model_data }}/\`）
+          - ✅ 各マテリアルのアイテムオーバーライド設定を追加
+
+          ---
+
+          *🤖 このプルリクエストは GitHub Actions により自動生成されました*
+          EOF
+          )
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: 📝 プルリクエストの内容を準備（マテリアル拡張）
         if: inputs.issue-type == 'extend'
@@ -173,21 +202,29 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.token }}
-          commit-message: ${{ steps.pr_details_add.outputs.commit_message || steps.pr_details_extend.outputs.commit_message }}
-          title: ${{ steps.pr_details_add.outputs.title || steps.pr_details_extend.outputs.title }}
-          body: ${{ steps.pr_details_add.outputs.body || steps.pr_details_extend.outputs.body }}
+          commit-message: ${{ steps.pr_details_model.outputs.commit_message || steps.pr_details_model3d.outputs.commit_message || steps.pr_details_extend.outputs.commit_message }}
+          title: ${{ steps.pr_details_model.outputs.title || steps.pr_details_model3d.outputs.title || steps.pr_details_extend.outputs.title }}
+          body: ${{ steps.pr_details_model.outputs.body || steps.pr_details_model3d.outputs.body || steps.pr_details_extend.outputs.body }}
           branch: ${{ inputs.issue-type }}-model/issue-${{ inputs.issue-number }}
           delete-branch: true
           committer: GitHub Actions Bot <actions@github.com>
           author: ${{ inputs.actor }} <${{ inputs.actor-id }}+${{ inputs.actor }}@users.noreply.github.com>
 
-      - name: ✅ Issueに成功コメントを投稿（新規追加）
-        if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'add'
+      - name: ✅ Issueに成功コメントを投稿（2Dモデル）
+        if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'model'
         run: |
           GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-success \
             --issue-number ${{ inputs.issue-number }} \
             --pr-number ${{ steps.create_pr.outputs.pull-request-number }} \
             --preview-url "${{ steps.process.outputs.preview_url }}"
+
+      - name: ✅ Issueに成功コメントを投稿（3Dモデル）
+        if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'model3d'
+        run: |
+          GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-success \
+            --issue-number ${{ inputs.issue-number }} \
+            --pr-number ${{ steps.create_pr.outputs.pull-request-number }}
+
 
       - name: ✅ Issueに成功コメントを投稿（マテリアル拡張）
         if: steps.create_pr.outputs.pull-request-number && inputs.issue-type == 'extend'

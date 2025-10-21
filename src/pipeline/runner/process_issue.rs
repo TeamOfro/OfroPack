@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use tempfile::tempdir;
 
 use crate::{
-    cmd::{ Run},
+    cmd::{Run, add, extend},
     constants::{IssueType, REPO_NAME, REPO_OWNER},
     pipeline::{
         github_client::GitHubClient,
@@ -37,27 +37,24 @@ impl IssueProcessor {
         issue_type: IssueType,
         issue_body: &str,
     ) -> Result<ProcessResult> {
-        println!("
-=== Issue #{}の処理を開始 ===
-", issue_number);
+        println!("\n=== Issue #{}の処理を開始 ===\n", issue_number);
 
         self.github_client
             .react_issue(issue_number, crate::constants::GithubReaction::Rocket)
             .context("Reactionの追加に失敗しました")?;
 
-        println!("
-📝 Issueを解析中...");
+        println!("\n📝 Issueを解析中...");
         let parsed =
             IssueParser::parse(issue_body, issue_type).context("Issueの解析に失敗しました")?;
 
         match parsed {
-            ParsedIssue::AddCustomModel {
+            ParsedIssue::Model {
                 materials,
                 custom_model_data,
                 image_url,
                 animation,
             } => {
-                println!("  タイプ: Add");
+                println!("  タイプ: Model");
                 println!("  マテリアル: {}", materials.join(", "));
                 println!("  カスタムモデルデータ: {}", custom_model_data);
                 println!("  画像URL: {}", image_url);
@@ -72,7 +69,7 @@ impl IssueProcessor {
                     .download(&image_url, &image_path)
                     .context("画像のダウンロードに失敗しました")?;
 
-                let add_cmd = crate::cmd::add::model::Model::new(
+                let add_cmd = add::model::Model::new(
                     materials,
                     Some(custom_model_data.clone()),
                     animation.map(|a| a.animation.frametime),
@@ -80,8 +77,7 @@ impl IssueProcessor {
                 );
                 add_cmd.run()?;
 
-                println!("
-🖼️  プレビュー画像を生成中...");
+                println!("\n🖼️  プレビュー画像を生成中...");
                 let texture_path = crate::constants::Paths::texture_path(&custom_model_data);
                 let preview_path = PreviewGenerator::generate(&texture_path, &custom_model_data)
                     .context("プレビュー画像の生成に失敗しました")?;
@@ -98,12 +94,53 @@ impl IssueProcessor {
                 );
 
                 println!("✓ プレビュー画像の生成が完了しました");
-                println!("
-=== 処理が正常に完了しました ===
-");
+                println!("\n=== 処理が正常に完了しました ===\n");
 
                 Ok(ProcessResult {
                     preview_url: Some(preview_url),
+                    custom_model_data,
+                    added_materials: None,
+                })
+            }
+            ParsedIssue::Model3d {
+                materials,
+                custom_model_data,
+                model_json_url,
+                layer_image_urls,
+            } => {
+                println!("  タイプ: Model3d");
+                println!("  マテリアル: {}", materials.join(", "));
+                println!("  カスタムモデルデータ: {}", custom_model_data);
+                println!("  モデルJSON URL: {}", model_json_url);
+                println!("  レイヤー画像 URL: {}", layer_image_urls.join("\n"));
+
+                let dir = tempdir()?;
+                let model_json_path = dir.path().join(format!("{}.json", custom_model_data));
+                self.image_downloader
+                    .download(&model_json_url, &model_json_path)
+                    .context("モデルJSONのダウンロードに失敗しました")?;
+
+                let mut layer_image_paths = Vec::new();
+                for (i, url) in layer_image_urls.iter().enumerate() {
+                    let image_path = dir.path().join(format!("{}_{}.png", custom_model_data, i));
+                    self.image_downloader
+                        .download(url, &image_path)
+                        .context(format!("レイヤー画像 {} のダウンロードに失敗しました", i))?;
+                    layer_image_paths.push(image_path);
+                }
+
+                let add_cmd = add::model3d::Model3D::new(
+                    materials,
+                    custom_model_data.clone(),
+                    model_json_path,
+                    layer_image_paths,
+                );
+                add_cmd.run()?;
+
+                println!("\n=== 処理が正常に完了しました ===\n");
+
+                Ok(ProcessResult {
+                    preview_url: None, // 3D model does not have a preview
                     custom_model_data,
                     added_materials: None,
                 })
@@ -116,15 +153,13 @@ impl IssueProcessor {
                 println!("  追加するマテリアル: {}", materials.join(", "));
                 println!("  カスタムモデルデータ: {}", custom_model_data);
 
-                let extend_cmd = crate::cmd::extend::Extend {
+                let extend_cmd = extend::Extend {
                     materials: materials.clone(),
                     custom_model_data: custom_model_data.clone(),
                 };
                 extend_cmd.run()?;
 
-                println!("
-=== 処理が正常に完了しました ===
-");
+                println!("\n=== 処理が正常に完了しました ===\n");
 
                 Ok(ProcessResult {
                     preview_url: None,
@@ -132,13 +167,18 @@ impl IssueProcessor {
                     added_materials: Some(materials),
                 })
             }
-            _ => unimplemented!(),
         }
     }
 
-    pub fn post_success(&self, issue_number: u64, pr_number: u64, preview_url: &str) -> Result<()> {
-        let comment = format!(
-            r#"## ✅ カスタムモデルの処理が完了しました！
+    pub fn post_success(
+        &self,
+        issue_number: u64,
+        pr_number: u64,
+        preview_url: Option<&str>,
+    ) -> Result<()> {
+        let comment = if let Some(preview_url) = preview_url {
+            format!(
+                r##"## ✅ 2Dカスタムモデルの処理が完了しました！
 
 **Pull Request:** #{}
 
@@ -146,9 +186,19 @@ impl IssueProcessor {
 
 ![Custom Model Preview]({})
 
-このカスタムモデルをリソースパックに追加するため、PRをレビューしてマージしてください。"#,
-            pr_number, preview_url
-        );
+このカスタムモデルをリソースパックに追加するため、PRをレビューしてマージしてください。"##,
+                pr_number, preview_url
+            )
+        } else {
+            format!(
+                r##"## ✅ 3Dカスタムモデルの処理が完了しました！
+
+**Pull Request:** #{}
+
+3Dモデルがリソースパックに追加されました。PRをレビューしてマージしてください。"##,
+                pr_number
+            )
+        };
 
         self.github_client
             .comment_issue(issue_number, &comment)
@@ -171,11 +221,10 @@ impl IssueProcessor {
             .iter()
             .map(|m| format!("- `{}`", m))
             .collect::<Vec<_>>()
-            .join("
-");
+            .join("\n");
 
         let comment = format!(
-            r#"## ✅ マテリアルの拡張が完了しました！
+            r##"## ✅ マテリアルの拡張が完了しました！
 
 **Pull Request:** #{}
 
@@ -183,7 +232,7 @@ impl IssueProcessor {
 
 {}
 
-既存のカスタムモデルに上記のマテリアルが追加されました。PRをレビューしてマージしてください。"#,
+既存のカスタムモデルに上記のマテリアルが追加されました。PRをレビューしてマージしてください。"##,
             pr_number, materials_list
         );
 
@@ -205,7 +254,7 @@ impl IssueProcessor {
         workflow_url: &str,
     ) -> Result<()> {
         let comment = format!(
-            r#"## ❌ カスタムモデルの処理に失敗しました
+            r##"## ❌ カスタムモデルの処理に失敗しました
 
 ワークフローでエラーが発生しました。詳細は[ワークフローログ]({})を確認してください。
 
@@ -221,7 +270,7 @@ impl IssueProcessor {
 2. 入力内容を修正する
 3. **新しいIssueを作成する**（正しい情報を入力）
 
-⚠️ **注意:** このIssueを編集しても再実行されません。新しいIssueを作成してください。"#,
+⚠️ **注意:** このIssueを編集しても再実行されません。新しいIssueを作成してください。"##,
             workflow_url, error_message
         );
 
@@ -240,3 +289,4 @@ impl IssueProcessor {
         Ok(())
     }
 }
+

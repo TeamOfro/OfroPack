@@ -32,6 +32,22 @@ pub struct Model3D {
     layer_images: Vec<PathBuf>,
 }
 
+impl Model3D {
+    pub fn new(
+        materials: Vec<String>,
+        custom_model_data: String,
+        model_json_file: PathBuf,
+        layer_images: Vec<PathBuf>,
+    ) -> Self {
+        Self {
+            materials,
+            custom_model_data,
+            model_json_file,
+            layer_images,
+        }
+    }
+}
+
 impl Run for Model3D {
     fn run(&self) -> anyhow::Result<()> {
         if self.materials.is_empty() {

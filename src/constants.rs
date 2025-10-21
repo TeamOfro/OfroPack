@@ -2,7 +2,8 @@ use std::{path::PathBuf, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum IssueType {
-    Add,
+    Model,
+    Model3d,
     Extend,
 }
 

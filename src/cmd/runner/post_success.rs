@@ -11,13 +11,13 @@ pub struct PostSuccess {
     pr_number: u64,
 
     #[arg(long)]
-    preview_url: String,
+    preview_url: Option<String>,
 }
 
 impl Run for PostSuccess {
     fn run(&self) -> Result<()> {
         let processor = IssueProcessor::new()?;
-        processor.post_success(self.issue_number, self.pr_number, &self.preview_url)?;
+        processor.post_success(self.issue_number, self.pr_number, self.preview_url.as_deref())?;
         Ok(())
     }
 }

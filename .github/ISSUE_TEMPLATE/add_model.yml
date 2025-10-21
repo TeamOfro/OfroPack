@@ -1,7 +1,7 @@
 name: custom-model
 description: カスタムモデルデータの追加リクエスト
 title: "[カスタムモデル] "
-labels: ["custom-model"]
+labels: ["add-model"]
 body:
   - type: markdown
     attributes:
