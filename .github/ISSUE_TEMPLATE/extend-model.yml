@@ -8,12 +8,12 @@ body:
       value: |
         ## 既存カスタムモデルの拡張
         既存のカスタムモデルに新しいマテリアルを追加します。
-        
+
         **注意事項:**
         - 既に存在するカスタムモデルデータ名を指定してください
         - エラーが発生した場合、このIssueは自動的にクローズされます
         - Issueの編集では再実行されません。エラーの場合は新しいIssueを作成してください
-  
+
   - type: input
     id: materials
     attributes:
@@ -22,7 +22,7 @@ body:
       placeholder: "diamond_axe,iron_sword"
     validations:
       required: true
-  
+
   - type: input
     id: custom_model_data
     attributes:
@@ -31,7 +31,7 @@ body:
       placeholder: "my_custom_model"
     validations:
       required: true
-  
+
   - type: textarea
     id: notes
     attributes:

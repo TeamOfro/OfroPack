@@ -1,4 +1,4 @@
-name: custom-model
+name: add-model
 description: カスタムモデルデータの追加リクエスト
 title: "[カスタムモデル] "
 labels: ["add-model"]
@@ -8,13 +8,13 @@ body:
       value: |
         ## カスタムモデルデータのリクエスト
         以下のフォームに入力すると、自動的にリソースパックにカスタムモデルが追加されます。
-        
+
         **注意事項:**
         - 画像URLは直接アクセス可能な公開URLを指定してください
         - PNG形式の画像のみ対応しています
         - エラーが発生した場合、このIssueは自動的にクローズされます
         - Issueの編集では再実行されません。エラーの場合は新しいIssueを作成してください
-  
+
   - type: input
     id: materials
     attributes:
@@ -23,7 +23,7 @@ body:
       placeholder: "diamond_axe,iron_sword"
     validations:
       required: true
-  
+
   - type: input
     id: custom_model_data
     attributes:
@@ -41,10 +41,10 @@ body:
       options:
         - handheld
         - generated
-      default: handheld
+      default: 0
     validations:
       required: true
-  
+
   - type: input
     id: image_url
     attributes:

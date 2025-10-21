@@ -8,12 +8,12 @@ body:
       value: |
         ## 3Dカスタムモデルデータのリクエスト
         以下のフォームに入力すると、自動的にリソースパックに3Dカスタムモデルが追加されます。
-        
+
         **注意事項:**
         - 各URLは直接アクセス可能な公開URLを指定してください
         - モデルはBlockbenchなどで作成したJSON形式、テクスチャはPNG形式のみ対応しています
         - エラーが発生した場合、このIssueは自動的にクローズされます
-  
+
   - type: input
     id: materials
     attributes:
@@ -22,7 +22,7 @@ body:
       placeholder: "diamond_axe,iron_sword"
     validations:
       required: true
-  
+
   - type: input
     id: custom_model_data
     attributes:
