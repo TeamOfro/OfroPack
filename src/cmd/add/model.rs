@@ -4,14 +4,10 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::{ItemModelParent, Paths, should_snake_case},
+    constants::ItemModelParent,
     pipeline::image_validator::ImageValidator,
-    schema::{
-        animation::{AnimationData, AnimationInfo},
-        items::{ItemCase, ItemResource},
-        models::ItemModel,
-    },
-    utils::json::{read_json, write_json},
+    schema::animation::{AnimationData, AnimationInfo},
+    utils::{add as helpers},
 };
 
 #[derive(Debug, clap::Parser)]
@@ -51,13 +47,7 @@ impl Model {
 
 impl Run for Model {
     fn run(&self) -> anyhow::Result<()> {
-        if self.materials.is_empty() {
-            anyhow::bail!("少なくとも1つのmaterialを指定してください。");
-        }
-
-        self.materials
-            .iter()
-            .try_for_each(|material| should_snake_case(material))?;
+        helpers::validate_materials(&self.materials)?;
 
         if !self.path_to_image.exists() {
             anyhow::bail!(
@@ -66,34 +56,9 @@ impl Run for Model {
             );
         }
 
-        let custom_model_data = match &self.custom_model_data {
-            Some(name) => name.to_lowercase(),
-            None => self
-                .path_to_image
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .context("画像ファイル名の取得に失敗")?
-                .to_string(),
-        };
+        let custom_model_data = helpers::infer_or_validate_name(&self.custom_model_data, &self.path_to_image)?;
 
-        should_snake_case(&custom_model_data)?;
-
-        let model_path = Paths::model_path(&custom_model_data);
-        let texture_path = Paths::texture_path(&custom_model_data);
-
-        if model_path.exists() {
-            anyhow::bail!(
-                "モデルファイルが既に存在します: {}",
-                model_path.to_string_lossy()
-            );
-        }
-
-        if texture_path.exists() {
-            anyhow::bail!(
-                "テクスチャファイルが既に存在します: {}",
-                texture_path.to_string_lossy()
-            );
-        }
+        helpers::ensure_not_exists_2d(&custom_model_data)?;
 
         let animation_info = self.frametime.map(|frametime| AnimationInfo {
             animation: AnimationData { frametime },
@@ -101,10 +66,9 @@ impl Run for Model {
 
         ImageValidator::new_png(&self.path_to_image)?.should_model(animation_info.as_ref())?;
 
-        let item_model = ItemModel::new(ItemModelParent::Handheld, &custom_model_data);
-        write_json(&model_path, &item_model)
-            .with_context(|| format!("モデルファイルの書き込みに失敗: {}", model_path.display()))?;
+        helpers::write_new_item_model(ItemModelParent::Handheld, &custom_model_data)?;
 
+        let texture_path = crate::constants::Paths::texture_path(&custom_model_data);
         std::fs::copy(&self.path_to_image, &texture_path).with_context(|| {
             format!(
                 "テクスチャファイルのコピーに失敗: {} -> {}",
@@ -113,34 +77,7 @@ impl Run for Model {
             )
         })?;
 
-        let case = ItemCase::new(&custom_model_data);
-        for material in &self.materials {
-            let material_path = Paths::item_path(material);
-            let mut resource = if material_path.exists() {
-                read_json::<ItemResource>(&material_path).with_context(|| {
-                    format!(
-                        "マテリアルファイルの読み込みに失敗: {}",
-                        material_path.display()
-                    )
-                })?
-            } else {
-                ItemResource::new(material)
-            };
-
-            resource.add_case(case.clone());
-
-            write_json(&material_path, &resource).with_context(|| {
-                format!(
-                    "マテリアルファイルの書き込みに失敗: {}",
-                    material_path.display()
-                )
-            })?;
-
-            println!(
-                "カスタムモデルデータ '{}' をマテリアル '{}' に追加しました",
-                custom_model_data, material
-            );
-        }
+        helpers::update_materials(&self.materials, &custom_model_data)?;
 
         Ok(())
     }
