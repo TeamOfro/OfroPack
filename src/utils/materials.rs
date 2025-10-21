@@ -7,7 +7,7 @@ use crate::constants::Paths;
 
 #[derive(Debug, Deserialize)]
 pub struct ItemTextureEntry {
-    pub model: String,
+    pub name: String,
     pub texture: String,
 }
 
@@ -25,8 +25,24 @@ impl MaterialMapping {
             serde_json::from_str(&data).context("items_textures.json のパースに失敗")?;
         let by_material = entries
             .into_iter()
-            .map(|e| (e.model, e.texture))
-            .collect::<HashMap<_, _>>();
+            .filter_map(|e| {
+                let texture = e.texture.trim_start_matches("minecraft:");
+                let texture = match texture {
+                    texture if texture.starts_with("item/") || texture.starts_with("items/") => {
+                        format!("minecraft:item/{}", e.name)
+                    }
+                    texture if texture.starts_with("block/") || texture.starts_with("blocks/") => {
+                        format!("minecraft:block/{}", e.name)
+                    }
+                    // skip other types
+                    _ => {
+                        return None;
+                    }
+                };
+
+                Some((e.name, texture))
+            })
+            .collect();
         Ok(Self { by_material })
     }
 
