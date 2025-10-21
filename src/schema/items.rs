@@ -19,6 +19,10 @@ impl ItemResource {
             },
         }
     }
+
+    pub fn add_case(&mut self, case: ItemCase) {
+        self.model.cases.push(case);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

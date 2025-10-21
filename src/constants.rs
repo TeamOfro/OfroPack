@@ -81,6 +81,13 @@ pub fn should_snake_case(s: &str) -> anyhow::Result<()> {
     }
 }
 
+// TODO: correct name
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum ItemModelParent {
+    Generated,
+    Handheld,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GithubReaction {
     ThumbsUp,
