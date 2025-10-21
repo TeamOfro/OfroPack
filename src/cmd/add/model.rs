@@ -27,6 +27,10 @@ pub struct Model {
 
     /// テクスチャ画像ファイルのパス
     path_to_image: PathBuf,
+
+    /// モデル親（2Dの描画スタイル）
+    #[arg(long, value_enum, default_value = "handheld")]
+    parent: ItemModelParent,
 }
 
 impl Model {
@@ -35,12 +39,14 @@ impl Model {
         custom_model_data: Option<String>,
         frametime: Option<u32>,
         path_to_image: PathBuf,
+        parent: ItemModelParent,
     ) -> Self {
         Self {
             materials,
             custom_model_data,
             frametime,
             path_to_image,
+            parent,
         }
     }
 }
@@ -67,7 +73,7 @@ impl Run for Model {
 
         ImageValidator::new_png(&self.path_to_image)?.should_model(animation_info.as_ref())?;
 
-        helpers::write_new_item_model(ItemModelParent::Handheld, &custom_model_data)?;
+        helpers::write_new_item_model(self.parent, &custom_model_data)?;
 
         let texture_path = crate::constants::Paths::texture_path(&custom_model_data);
         std::fs::copy(&self.path_to_image, &texture_path).with_context(|| {

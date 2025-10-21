@@ -53,11 +53,13 @@ impl IssueProcessor {
                 custom_model_data,
                 image_url,
                 animation,
+                parent,
             } => {
                 println!("  タイプ: Model");
                 println!("  マテリアル: {}", materials.join(", "));
                 println!("  カスタムモデルデータ: {}", custom_model_data);
                 println!("  画像URL: {}", image_url);
+                println!("  モデル親: {}", parent.as_str());
                 if let Some(anim) = &animation {
                     println!("  Frametime: {}", anim.animation.frametime);
                 }
@@ -74,6 +76,7 @@ impl IssueProcessor {
                     Some(custom_model_data.clone()),
                     animation.map(|a| a.animation.frametime),
                     image_path,
+                    parent,
                 );
                 add_cmd.run()?;
 

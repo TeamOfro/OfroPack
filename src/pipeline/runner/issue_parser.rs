@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 
 use crate::{
-    constants::{IssueType, should_snake_case},
+    constants::{IssueType, ItemModelParent, should_snake_case},
     schema::animation::{AnimationData, AnimationInfo},
 };
 
@@ -12,6 +12,7 @@ pub enum ParsedIssue {
         custom_model_data: String,
         image_url: String,
         animation: Option<AnimationInfo>,
+        parent: ItemModelParent,
     },
     Model3d {
         materials: Vec<String>,
@@ -74,6 +75,13 @@ impl IssueParser {
             bail!("画像URLはhttp://またはhttps://で始まる必要があります");
         }
 
+        let parent = Self::extract_field(body, "モデル親")
+            .and_then(|s| match s.as_str() {
+                "_No response_" | "" => None,
+                _ => <ItemModelParent as std::str::FromStr>::from_str(&s).ok(),
+            })
+            .unwrap_or(ItemModelParent::Handheld);
+
         let animation =
             Self::extract_field(body, "Frametime（アニメーション用・任意）").and_then(|s| {
                 if s == "_No response_" || s.is_empty() {
@@ -90,6 +98,7 @@ impl IssueParser {
             custom_model_data,
             image_url,
             animation,
+            parent,
         })
     }
 
@@ -122,7 +131,7 @@ impl IssueParser {
         }
 
         let layer_image_urls = Self::extract_field(body, "レイヤー画像のURLリスト")
-            .context("レイヤー画像のURLリストフィールドが見つかりません")?;
+            .context("レイヤー画像のURLリールドフィールドが見つかりません")?;
         if layer_image_urls == "_No response_" || layer_image_urls.is_empty() {
             bail!("レイヤー画像のURLは必須項目です");
         }

@@ -24,11 +24,13 @@ impl Run for ParseIssue {
                 custom_model_data,
                 image_url,
                 animation,
+                parent,
             } => {
-                println!("issue_type=add");
+                println!("issue_type=model");
                 println!("materials={}", materials.join(","));
                 println!("custom_model_data={}", custom_model_data);
                 println!("image_url={}", image_url);
+                println!("parent={}", parent.as_str());
                 if let Some(anim) = animation {
                     println!("frametime={}", anim.animation.frametime);
                 }

@@ -32,6 +32,18 @@ body:
       placeholder: "my_custom_model"
     validations:
       required: true
+
+  - type: dropdown
+    id: parent
+    attributes:
+      label: モデル親
+      description: "2Dモデルの描画スタイルを選択してください。"
+      options:
+        - handheld
+        - generated
+      default: handheld
+    validations:
+      required: true
   
   - type: input
     id: image_url
