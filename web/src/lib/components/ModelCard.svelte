@@ -45,7 +45,6 @@
     </button>
     <div class='mb-4 text-sm text-muted'>
       📅 {addedDate}
-      {#if model.author !== 'Unknown'}<br />👤 {model.author}{/if}
       {#if isAnimated}<br />🎬 {frameCount}フレーム{/if}
     </div>
     <div class='mt-2 flex flex-wrap gap-1'>

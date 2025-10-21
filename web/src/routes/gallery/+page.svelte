@@ -11,20 +11,12 @@
 
   // Filter and sort states
   let materialFilter = $state('');
-  let authorFilter = $state('');
   let idFilter = $state('');
   let sortOrder = $state('date_desc');
 
   // Derived states for select options
   const allMaterials = [
     ...new Set(models.flatMap(model => model.materials)),
-  ].sort();
-  const allAuthors = [
-    ...new Set(
-      models
-        .map(model => model.author)
-        .filter(author => author && author !== 'Unknown'),
-    ),
   ].sort();
 
   // Reactive filtered and sorted models
@@ -35,10 +27,6 @@
       filtered = filtered.filter(model =>
         model.materials.some(m => m.toLowerCase() === materialFilter.toLowerCase()),
       );
-    }
-
-    if (authorFilter) {
-      filtered = filtered.filter(model => model.author.toLowerCase() === authorFilter.toLowerCase());
     }
 
     if (idFilter) {
@@ -73,7 +61,6 @@
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     materialFilter = urlParams.get('material') || '';
-    authorFilter = urlParams.get('author') || '';
     idFilter = urlParams.get('id') || '';
     sortOrder = urlParams.get('sort') || 'date_desc';
   });
@@ -82,8 +69,6 @@
     const urlParams = new URLSearchParams();
     if (materialFilter)
       urlParams.set('material', materialFilter);
-    if (authorFilter)
-      urlParams.set('author', authorFilter);
     if (idFilter)
       urlParams.set('id', idFilter);
     if (sortOrder !== 'date_desc')
@@ -133,13 +118,6 @@
         <option value="">すべてのマテリアル</option>
         {#each allMaterials as material}
           <option value={material}>{material}</option>
-        {/each}
-      </select>
-      <label for='filter-author' class='text-sm text-muted'>作者:</label>
-      <select id='filter-author' bind:value={authorFilter} class='bg-[#1a1d21] border border-border rounded px-3 py-2 text-white font-sans min-w-[180px] transition-colors duration-300 appearance-none [background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23e0e0e0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")] [background-repeat:no-repeat] [background-position:right_12px_center] [background-size:10px] pr-[30px]'>
-        <option value="">すべての作者</option>
-        {#each allAuthors as author}
-          <option value={author}>{author}</option>
         {/each}
       </select>
       <label for='filter-id' class='text-sm text-muted'>ID:</label>

@@ -30,7 +30,8 @@ pub struct ModelsData {
 pub struct ModelInfo {
     pub name: String,
     pub materials: Vec<String>,
-    pub texture_path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub texture_path: Option<String>,
     pub added_date: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub animation: Option<AnimationMetadata>,
@@ -107,10 +108,15 @@ impl super::Run for Models {
             }
 
             let texture_path = Paths::texture_path(&model_name);
-            if !texture_path.exists() {
+            let texture_path_dir = Paths::texture_path_dir(&model_name);
+            let texture_path = if texture_path_dir.is_dir() {
+                None
+            } else if !texture_path.exists() {
                 eprintln!("  ✗ テクスチャファイルが存在しません: {:?}", texture_path);
                 continue;
-            }
+            } else {
+                Some(texture_path)
+            };
 
             let added_date =
                 find_git_added_data(&model_path).context("Gitメタデータの取得に失敗")?;
@@ -123,7 +129,7 @@ impl super::Run for Models {
                     .get(&model_name)
                     .cloned()
                     .unwrap_or_default(),
-                texture_path: texture_path.to_string_lossy().to_string(),
+                texture_path: texture_path.map(|v| v.to_string_lossy().to_string()),
                 added_date,
                 animation: animation_metadata,
             };

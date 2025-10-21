@@ -6,9 +6,9 @@ export interface AnimationData {
 export interface ModelData {
   name: string;
   materials: string[];
-  texture_url: string;
+  // undefined だったら、3Dモデルのため、表示しない
+  texture_path?: string;
   added_date: string;
-  author: string;
   animation?: AnimationData;
 }
 

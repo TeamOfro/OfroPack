@@ -17,12 +17,18 @@
 </script>
 
 <div class='mx-auto aspect-square relative overflow-y-hidden h-full'>
-  <img
-    src={assetUrl(model.texture_url)}
-    alt={model.name}
-    loading='lazy'
-    decoding='async'
-    class='absolute w-full object-contain [image-rendering:pixelated] transition-none'
-    style={style}
-  />
+  {#if model.texture_path}
+    <img
+      src={assetUrl(model.texture_path)}
+      alt={model.name}
+      loading='lazy'
+      decoding='async'
+      class='absolute w-full object-contain [image-rendering:pixelated] transition-none'
+      style={style}
+    />
+  {:else}
+    <div class='absolute w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-500'>
+      3D Model
+    </div>
+  {/if}
 </div>
