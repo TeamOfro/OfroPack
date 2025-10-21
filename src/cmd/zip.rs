@@ -1,12 +1,10 @@
-use std::path::PathBuf;
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
-use anyhow::{Context, Result};
+use anyhow::Context;
 
-use crate::cmd::Run;
-
+/// リソースパックをZipに圧縮する
 #[derive(clap::Parser, Debug)]
-pub struct GenerateZip {
+pub struct Zip {
     /// 出力Zipファイルのパス (デフォルト: OfroPack.zip)
     #[arg(short, long, default_value = "OfroPack.zip")]
     pub output: PathBuf,
@@ -16,8 +14,8 @@ pub struct GenerateZip {
     pub files: Vec<String>,
 }
 
-impl Run for GenerateZip {
-    fn run(&self) -> Result<()> {
+impl super::Run for Zip {
+    fn run(&self) -> anyhow::Result<()> {
         println!("📦 リソースパックを圧縮中...");
 
         // Validate that files exist
@@ -30,10 +28,9 @@ impl Run for GenerateZip {
 
         // Remove existing zip if it exists
         if self.output.exists() {
-            std::fs::remove_file(&self.output).context(format!(
-                "既存のZipファイルの削除に失敗: {}",
-                self.output.display()
-            ))?;
+            std::fs::remove_file(&self.output).with_context(|| {
+                format!("既存のZipファイルの削除に失敗: {}", self.output.display())
+            })?;
         }
 
         {
@@ -59,10 +56,12 @@ impl Run for GenerateZip {
 
         // Get file size
         let size = std::fs::metadata(&self.output)
-            .context(format!(
-                "Zipファイルのメタデータ取得に失敗: {}",
-                self.output.display()
-            ))?
+            .with_context(|| {
+                format!(
+                    "Zipファイルのメタデータ取得に失敗: {}",
+                    self.output.display()
+                )
+            })?
             .len();
 
         println!("\n✅ リソースパックを作成しました");

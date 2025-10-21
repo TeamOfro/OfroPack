@@ -1,4 +1,4 @@
-mod close_issue;
+mod close;
 mod comment;
 mod generate_preview;
 mod parse_issue;
@@ -6,59 +6,46 @@ mod post_extend_success;
 mod post_failure;
 mod post_success;
 mod process_issue;
-mod react;
+mod reaction;
 
-use anyhow::Result;
+#[derive(Debug, clap::Parser)]
+pub struct Runner {
+    #[command(subcommand)]
+    pub subcommand: RunnerSubcommand,
+}
 
-use crate::cmd::{Run, Runner, RunnerSubcommands};
+#[derive(Debug, clap::Subcommand)]
+#[command(version, about)]
+pub enum RunnerSubcommand {
+    ProcessIssue(process_issue::ProcessIssue),
+    ParseIssue(parse_issue::ParseIssue),
+    PostSuccess(post_success::PostSuccess),
+    PostExtendSuccess(post_extend_success::PostExtendSuccess),
+    PostFailure(post_failure::PostFailure),
+    GeneratePreview(generate_preview::GeneratePreview),
+    Comment(comment::Comment),
+    Reaction(reaction::Reaction),
+    Close(close::Close),
+}
 
-impl Run for Runner {
-    fn run(&self) -> Result<()> {
-        match &self.subcommand {
-            RunnerSubcommands::ProcessIssue {
-                issue_number,
-                issue_type,
-                body,
-            } => process_issue::run(*issue_number, *issue_type, body),
-            RunnerSubcommands::ParseIssue { body, issue_type } => {
-                parse_issue::run(body, *issue_type)
-            }
-            RunnerSubcommands::PostSuccess {
-                issue_number,
-                pr_number,
-                preview_url,
-            } => post_success::run(*issue_number, *pr_number, preview_url),
-            RunnerSubcommands::PostExtendSuccess {
-                issue_number,
-                pr_number,
-                materials,
-            } => post_extend_success::run(*issue_number, *pr_number, materials.clone()),
-            RunnerSubcommands::PostFailure {
-                issue_number,
-                error_message,
-                workflow_url,
-            } => post_failure::run(*issue_number, error_message, workflow_url),
-            RunnerSubcommands::Comment { issue_number, body } => comment::run(*issue_number, body),
-            RunnerSubcommands::React {
-                issue_number,
-                reaction,
-            } => react::run(*issue_number, reaction),
-            RunnerSubcommands::CloseIssue { issue_number } => close_issue::run(*issue_number),
-            RunnerSubcommands::GeneratePreview {
-                source,
-                model_name,
-                preview_dir,
-                repo_owner,
-                repo_name,
-                branch,
-            } => generate_preview::run(
-                source,
-                model_name,
-                preview_dir,
-                repo_owner,
-                repo_name,
-                branch,
-            ),
+impl super::Run for RunnerSubcommand {
+    fn run(&self) -> anyhow::Result<()> {
+        match self {
+            RunnerSubcommand::ProcessIssue(cmd) => cmd.run(),
+            RunnerSubcommand::ParseIssue(cmd) => cmd.run(),
+            RunnerSubcommand::PostSuccess(cmd) => cmd.run(),
+            RunnerSubcommand::PostExtendSuccess(cmd) => cmd.run(),
+            RunnerSubcommand::PostFailure(cmd) => cmd.run(),
+            RunnerSubcommand::GeneratePreview(cmd) => cmd.run(),
+            RunnerSubcommand::Comment(cmd) => cmd.run(),
+            RunnerSubcommand::Reaction(cmd) => cmd.run(),
+            RunnerSubcommand::Close(cmd) => cmd.run(),
         }
+    }
+}
+
+impl super::Run for Runner {
+    fn run(&self) -> anyhow::Result<()> {
+        self.subcommand.run()
     }
 }

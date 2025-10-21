@@ -1,9 +1,23 @@
 use anyhow::Result;
 
-use crate::runner::IssueProcessor;
+use crate::{cmd::Run, pipeline::runner::process_issue::IssueProcessor};
 
-pub fn run(issue_number: u64, pr_number: u64, materials: Vec<String>) -> Result<()> {
-    let processor = IssueProcessor::new()?;
-    processor.post_extend_success(issue_number, pr_number, &materials)?;
-    Ok(())
+#[derive(clap::Parser, Debug)]
+pub struct PostExtendSuccess {
+    #[arg(long)]
+    issue_number: u64,
+
+    #[arg(long)]
+    pr_number: u64,
+
+    #[arg(long, value_delimiter = ',')]
+    materials: Vec<String>,
+}
+
+impl Run for PostExtendSuccess {
+    fn run(&self) -> Result<()> {
+        let processor = IssueProcessor::new()?;
+        processor.post_extend_success(self.issue_number, self.pr_number, &self.materials)?;
+        Ok(())
+    }
 }

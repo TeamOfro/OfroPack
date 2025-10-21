@@ -1,9 +1,27 @@
 use anyhow::Result;
 
-use crate::runner::IssueProcessor;
+use crate::{cmd::Run, pipeline::runner::process_issue::IssueProcessor};
 
-pub fn run(issue_number: u64, pr_number: u64, preview_url: &str) -> Result<()> {
-    let processor = IssueProcessor::new()?;
-    processor.post_success(issue_number, pr_number, preview_url)?;
-    Ok(())
+#[derive(clap::Parser, Debug)]
+pub struct PostSuccess {
+    #[arg(long)]
+    issue_number: u64,
+
+    #[arg(long)]
+    pr_number: u64,
+
+    #[arg(long)]
+    preview_url: Option<String>,
+}
+
+impl Run for PostSuccess {
+    fn run(&self) -> Result<()> {
+        let processor = IssueProcessor::new()?;
+        processor.post_success(
+            self.issue_number,
+            self.pr_number,
+            self.preview_url.as_deref(),
+        )?;
+        Ok(())
+    }
 }

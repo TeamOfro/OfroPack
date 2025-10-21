@@ -1,7 +1,7 @@
 name: custom-model
 description: カスタムモデルデータの追加リクエスト
 title: "[カスタムモデル] "
-labels: ["custom-model"]
+labels: ["add-model"]
 body:
   - type: markdown
     attributes:
@@ -30,6 +30,18 @@ body:
       label: カスタムモデルデータ名
       description: "英小文字、数字、アンダースコアのみ使用可能（例: my_custom_model）"
       placeholder: "my_custom_model"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: parent
+    attributes:
+      label: モデル親
+      description: "2Dモデルの描画スタイルを選択してください。"
+      options:
+        - handheld
+        - generated
+      default: handheld
     validations:
       required: true
   

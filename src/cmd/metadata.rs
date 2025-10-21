@@ -1,4 +1,4 @@
-use crate::constants::{REPO_NAME, REPO_OWNER, repo_url};
+use crate::constants::REPO_URL;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::cmd::Run;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Metadata {
+pub struct CollectMetadata {
     version: String,
     sha1: String,
     size: u64,
@@ -26,7 +26,7 @@ pub struct LatestPr {
 }
 
 #[derive(clap::Parser, Debug)]
-pub struct GenerateMetadata {
+pub struct Metadata {
     /// 出力ファイルパス (デフォルト: metadata.json)
     #[arg(short, long, default_value = "metadata.json")]
     pub output: PathBuf,
@@ -34,17 +34,9 @@ pub struct GenerateMetadata {
     /// ZipファイルのパスSHA1計算とサイズ取得に使用
     #[arg(short, long, default_value = "OfroPack.zip")]
     pub zip: PathBuf,
-
-    /// GitHub Repository owner (for download URL)
-    #[arg(long, default_value = REPO_OWNER)]
-    pub repo_owner: String,
-
-    /// GitHub Repository name (for download URL)
-    #[arg(long, default_value = REPO_NAME)]
-    pub repo_name: String,
 }
 
-impl Run for GenerateMetadata {
+impl Run for Metadata {
     fn run(&self) -> Result<()> {
         println!("📝 メタデータを生成中...");
 
@@ -82,7 +74,7 @@ impl Run for GenerateMetadata {
             println!("  ✓ 最新PR: #{} - {}", pr.number, pr.title);
         }
 
-        let metadata = Metadata {
+        let metadata = CollectMetadata {
             version,
             sha1,
             size,
@@ -100,7 +92,7 @@ impl Run for GenerateMetadata {
     }
 }
 
-impl GenerateMetadata {
+impl Metadata {
     /// Calculate SHA1 hash of the zip file
     fn calculate_sha1(&self) -> Result<String> {
         let output = Command::new("sha1sum")
@@ -184,11 +176,7 @@ impl GenerateMetadata {
                         "No title".to_string()
                     };
 
-                    let url = format!(
-                        "{}/pull/{}",
-                        repo_url(&self.repo_owner, &self.repo_name),
-                        number
-                    );
+                    let url = format!("{}/pull/{}", REPO_URL, number);
 
                     return Ok(Some(LatestPr { number, title, url }));
                 }
@@ -199,7 +187,7 @@ impl GenerateMetadata {
     }
 
     /// Write metadata to JSON file
-    fn write_metadata(&self, metadata: &Metadata) -> Result<()> {
+    fn write_metadata(&self, metadata: &CollectMetadata) -> Result<()> {
         // Create parent directory if needed
         if let Some(parent) = self.output.parent() {
             fs::create_dir_all(parent)

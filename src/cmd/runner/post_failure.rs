@@ -1,9 +1,23 @@
 use anyhow::Result;
 
-use crate::runner::IssueProcessor;
+use crate::{cmd::Run, pipeline::runner::process_issue::IssueProcessor};
 
-pub fn run(issue_number: u64, error_message: &str, workflow_url: &str) -> Result<()> {
-    let processor = IssueProcessor::new()?;
-    processor.post_failure(issue_number, error_message, workflow_url)?;
-    Ok(())
+#[derive(clap::Parser, Debug)]
+pub struct PostFailure {
+    #[arg(long)]
+    issue_number: u64,
+
+    #[arg(long)]
+    error_message: String,
+
+    #[arg(long)]
+    workflow_url: String,
+}
+
+impl Run for PostFailure {
+    fn run(&self) -> Result<()> {
+        let processor = IssueProcessor::new()?;
+        processor.post_failure(self.issue_number, &self.error_message, &self.workflow_url)?;
+        Ok(())
+    }
 }

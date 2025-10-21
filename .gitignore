@@ -1,6 +1,6 @@
 target/
 /*.png
+/*.json
 !/pack.png
-/models.json
-/metadata.json
+!/items_textures.json
 /OfroPack.zip

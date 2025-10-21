@@ -1,26 +1,22 @@
-#![allow(clippy::single_component_path_imports)]
-
-use std::io::{self, Write};
 use std::process::ExitCode;
 
 use clap::Parser;
-
-mod cmd;
-mod constants;
-mod file_utils;
-mod gallery;
-mod image_validator;
-mod models;
-mod processor;
-mod runner;
-
-use crate::cmd::{Cmd, Run};
+use processor::{
+    cmd::{Cmd, Run},
+    constants::Paths,
+};
 
 pub fn main() -> ExitCode {
+    if !Paths::assets_path().exists() {
+        eprint!(
+            "エラー: 'assets' ディレクトリが存在しません。OfroPackプロジェクトのルートディレクトリでコマンドを実行してください。"
+        );
+    }
+
     match Cmd::parse().run() {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            _ = writeln!(io::stderr(), "\n❌ エラー:\n{:?}", e);
+            eprintln!("エラー: {e}");
             ExitCode::FAILURE
         }
     }

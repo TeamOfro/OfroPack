@@ -1,24 +1,23 @@
 use anyhow::Context;
 
-use crate::cmd::Run;
+use crate::{cmd::Run, constants::GithubReaction};
 
 #[derive(clap::Parser, Debug)]
-pub struct Comment {
+pub struct Reaction {
     /// Issue番号
     #[arg(long)]
     issue_number: u64,
 
-    /// コメント本文（Markdown）
     #[arg(long)]
-    body: String,
+    reaction: GithubReaction,
 }
 
-impl Run for Comment {
+impl Run for Reaction {
     fn run(&self) -> anyhow::Result<()> {
         let github_client = crate::pipeline::github_client::GitHubClient::from_env()?;
         github_client
-            .comment_issue(self.issue_number, &self.body)
-            .context("GitHub Issueへのコメント投稿に失敗しました")?;
+            .react_issue(self.issue_number, self.reaction)
+            .context("GitHub Issueへのリアクション追加に失敗しました")?;
         Ok(())
     }
 }

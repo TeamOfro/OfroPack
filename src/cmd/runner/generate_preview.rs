@@ -1,21 +1,44 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
-use std::path::Path;
 
-use crate::runner::PreviewGenerator;
+use crate::{
+    cmd::Run,
+    constants::{REPO_NAME, REPO_OWNER},
+    pipeline::preview_generator::PreviewGenerator,
+};
 
-pub fn run(
-    source: &Path,
-    model_name: &str,
-    preview_dir: &Path,
-    repo_owner: &str,
-    repo_name: &str,
-    branch: &str,
-) -> Result<()> {
-    let generator = PreviewGenerator::new(preview_dir);
-    let preview_path = generator.generate(source, model_name)?;
+#[derive(clap::Parser, Debug)]
+pub struct GeneratePreview {
+    #[arg(long)]
+    source: PathBuf,
 
-    let url = PreviewGenerator::generate_url(repo_owner, repo_name, branch, &preview_path);
-    println!("preview_url={}", url);
+    #[arg(long)]
+    model_name: String,
 
-    Ok(())
+    #[arg(long, default_value = REPO_OWNER)]
+    repo_owner: String,
+
+    #[arg(long, default_value = REPO_NAME)]
+    repo_name: String,
+
+    #[arg(long, default_value = "main")]
+    branch: String,
+}
+
+impl Run for GeneratePreview {
+    fn run(&self) -> Result<()> {
+        let preview_path = PreviewGenerator::generate(&self.source, &self.model_name)?;
+
+        let url = format!(
+            "https://raw.githubusercontent.com/{}/{}/{}/{}",
+            self.repo_owner,
+            self.repo_name,
+            self.branch,
+            preview_path.to_string_lossy()
+        );
+        println!("preview_url={}", url);
+
+        Ok(())
+    }
 }

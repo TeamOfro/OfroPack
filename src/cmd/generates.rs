@@ -1,20 +1,28 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 
-use crate::Cmd;
-use crate::cmd::{Generates, Run};
+use crate::cmd::{Cmd, Run};
+
+#[derive(Debug, clap::Parser)]
+pub struct Generates;
 
 impl Run for Generates {
     fn run(&self) -> Result<()> {
-        Cmd::try_parse_from(["", "generate-zip"])
-            .with_context(|| "Failed to parse 'generate-zip' command")?
+        println!("📦 リソースパックを圧縮中...");
+        Cmd::try_parse_from(["", "zip"])
+            .with_context(|| "'zip' コマンドの解析に失敗しました")?
             .run()?;
-        Cmd::try_parse_from(["", "generate-gallery"])
-            .with_context(|| "Failed to parse 'generate-gallery' command")?
+
+        println!("🎨 ギャラリーデータを生成中...");
+        Cmd::try_parse_from(["", "models"])
+            .with_context(|| "'models' コマンドの解析に失敗しました")?
             .run()?;
-        Cmd::try_parse_from(["", "generate-metadata"])
-            .with_context(|| "Failed to parse 'generate-metadata' command")?
+
+        println!("📝 メタデータを生成中...");
+        Cmd::try_parse_from(["", "metadata"])
+            .with_context(|| "'metadata' コマンドの解析に失敗しました")?
             .run()?;
+
         Ok(())
     }
 }

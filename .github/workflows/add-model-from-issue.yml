@@ -1,4 +1,4 @@
-name: 🎨 カスタムモデルを追加
+name: 🎨 2Dモデルを追加
 
 on:
   issues:
@@ -6,11 +6,10 @@ on:
 
 jobs:
   call-reusable-workflow:
-    # 'custom-model' ラベルが付いたIssueのみ処理
-    if: contains(github.event.issue.labels.*.name, 'custom-model')
+    if: contains(github.event.issue.labels.*.name, 'add-model')
     uses: ./.github/workflows/reusable-process-issue.yml
     with:
-      issue-type: 'add'
+      issue-type: 'model'
       issue-body: ${{ github.event.issue.body }}
       issue-number: ${{ github.event.issue.number }}
       actor: ${{ github.actor }}

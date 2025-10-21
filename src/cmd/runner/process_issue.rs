@@ -1,19 +1,37 @@
 use anyhow::Result;
 
-use crate::{constants::IssueType, runner::IssueProcessor};
+use crate::{
+    cmd::Run,
+    constants::IssueType,
+    pipeline::runner::process_issue::{IssueProcessor, ProcessResult},
+};
 
-pub fn run(issue_number: u64, issue_type: IssueType, body: &str) -> Result<()> {
-    let processor = IssueProcessor::new()?;
-    let result = processor.process(issue_number, issue_type, body)?;
+#[derive(clap::Parser, Debug)]
+pub struct ProcessIssue {
+    #[arg(long)]
+    issue_number: u64,
 
-    // Output for GitHub Actions
-    if let Some(preview_url) = result.preview_url {
-        println!("PREVIEW_URL={}", preview_url);
+    #[arg(long)]
+    issue_type: IssueType,
+
+    #[arg(long)]
+    body: String,
+}
+
+impl Run for ProcessIssue {
+    fn run(&self) -> Result<()> {
+        let processor = IssueProcessor::new()?;
+        let result: ProcessResult =
+            processor.process(self.issue_number, self.issue_type, &self.body)?;
+
+        if let Some(preview_url) = result.preview_url {
+            println!("PREVIEW_URL={}", preview_url);
+        }
+        if let Some(materials) = result.added_materials {
+            println!("ADDED_MATERIALS={}", materials.join(","));
+        }
+        println!("CUSTOM_MODEL_DATA={}", result.custom_model_data);
+
+        Ok(())
     }
-    if let Some(materials) = result.added_materials {
-        println!("ADDED_MATERIALS={}", materials.join(","));
-    }
-    println!("CUSTOM_MODEL_DATA={}", result.custom_model_data);
-
-    Ok(())
 }

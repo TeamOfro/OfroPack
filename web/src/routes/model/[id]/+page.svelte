@@ -60,12 +60,6 @@
         <h2 class='mb-5 text-2xl text-muted'>詳細情報</h2>
         <p class='mb-2'><strong>📅 追加日:</strong> {addedDate}</p>
         <p class='mb-2'>
-          <strong>👤 作者:</strong>
-          <a href={assetUrl(`/gallery?author=${encodeURIComponent(model.author)}`)} class='text-primary no-underline hover:underline'>
-            {model.author}
-          </a>
-        </p>
-        <p class='mb-2'>
           <strong>🆔 ID:</strong>
           <code class='rounded bg-background p-1 font-mono'>{model.name}</code>
         </p>
