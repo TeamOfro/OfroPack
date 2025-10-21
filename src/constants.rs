@@ -42,6 +42,15 @@ impl Paths {
         Self::root().join(format!("{}/{}.png", Self::TEXTURES, custom_model_data))
     }
 
+    pub fn texture_layer_path(custom_model_data: &str, layer: usize) -> PathBuf {
+        Self::root().join(format!(
+            "{}/{}/{}.png",
+            Self::TEXTURES,
+            custom_model_data,
+            layer
+        ))
+    }
+
     pub fn animation_path(custom_model_data: &str) -> PathBuf {
         Self::root().join(format!(
             "{}/{}.png.mcmeta",
