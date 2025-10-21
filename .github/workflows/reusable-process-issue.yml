@@ -81,7 +81,7 @@ jobs:
           echo "custom_model_data=$CUSTOM_MODEL_DATA" >> $GITHUB_OUTPUT
 
           # 新規追加の場合はプレビュー画像URLも取得
-          if [ "${{ inputs.issue-type }}" = "add" ]; then
+          if [ "${{ inputs.issue-type }}" = "model" ]; then
             PREVIEW_URL=$(echo "$OUTPUT" | grep "^PREVIEW_URL=" | cut -d= -f2-)
             echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           fi
@@ -113,7 +113,6 @@ jobs:
 
           - ✅ テクスチャファイル（\`assets/minecraft/textures/item/${{ steps.process.outputs.custom_model_data }}.png\`）
           - ✅ モデルファイル（\`assets/minecraft/models/item/${{ steps.process.outputs.custom_model_data }}.json\`）
-          - ✅ 各マテリアルのアイテムオーバーライド設定を追加
 
           ---
 
@@ -141,7 +140,6 @@ jobs:
 
           - ✅ モデルファイル（\`assets/minecraft/models/item/${{ steps.process.outputs.custom_model_data }}.json\`）
           - ✅ テクスチャファイル（\`assets/minecraft/textures/item/${{ steps.process.outputs.custom_model_data }}/\`）
-          - ✅ 各マテリアルのアイテムオーバーライド設定を追加
 
           ---
 
@@ -184,7 +182,6 @@ jobs:
 
           ### ℹ️  変更内容
 
-          - ✅ 上記のマテリアルのアイテムオーバーライド設定を追加
           - ✅ 既存のモデルとテクスチャはそのまま利用
 
           ---

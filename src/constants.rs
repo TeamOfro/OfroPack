@@ -72,12 +72,8 @@ impl Paths {
         ))
     }
 
-    pub fn relative_preview_path(custom_model_data: &str) -> PathBuf {
-        PathBuf::from(format!("{}/{}.png", Self::PREVIEWS, custom_model_data))
-    }
-
     pub fn preview_path(custom_model_data: &str) -> PathBuf {
-        Self::root().join(Self::relative_preview_path(custom_model_data))
+        Self::root().join(format!("{}/{}.png", Self::PREVIEWS, custom_model_data))
     }
 }
 
