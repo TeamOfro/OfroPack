@@ -38,11 +38,19 @@ impl GitHubClient {
         Ok(Self { client, token })
     }
 
-    pub fn issue_url(issue_number: u64) -> String {
+    fn base_issue_url(issue_number: u64) -> String {
         format!(
-            "https://api.github.com/repos/{}/{}/issues/{}/reactions",
+            "https://api.github.com/repos/{}/{}/issues/{}",
             REPO_OWNER, REPO_NAME, issue_number
         )
+    }
+
+    fn comments_url(issue_number: u64) -> String {
+        format!("{}/comments", Self::base_issue_url(issue_number))
+    }
+
+    fn reactions_url(issue_number: u64) -> String {
+        format!("{}/reactions", Self::base_issue_url(issue_number))
     }
 
     /// Create a comment on an issue
@@ -51,7 +59,7 @@ impl GitHubClient {
             body: body.to_string(),
         };
 
-        self.post_request(&GitHubClient::issue_url(issue_number), &request)
+        self.post_request(&GitHubClient::comments_url(issue_number), &request)
             .context("Failed to post comment")?;
 
         println!("✓ Comment posted to issue #{}", issue_number);
@@ -62,7 +70,7 @@ impl GitHubClient {
     pub fn react_issue(&self, issue_number: u64, reaction: GithubReaction) -> Result<()> {
         let request = ReactionRequest { content: reaction };
 
-        self.post_request(&GitHubClient::issue_url(issue_number), &request)
+        self.post_request(&GitHubClient::reactions_url(issue_number), &request)
             .context("Failed to add reaction")?;
 
         println!("✓ Reaction '{}' added to issue #{}", reaction, issue_number);
@@ -75,7 +83,7 @@ impl GitHubClient {
             state: "closed".to_string(),
         };
 
-        self.patch_request(&GitHubClient::issue_url(issue_number), &request)
+        self.patch_request(&GitHubClient::base_issue_url(issue_number), &request)
             .context("Failed to close issue")?;
 
         println!("✓ Issue #{} closed", issue_number);

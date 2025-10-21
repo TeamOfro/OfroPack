@@ -17,7 +17,11 @@ pub struct PostSuccess {
 impl Run for PostSuccess {
     fn run(&self) -> Result<()> {
         let processor = IssueProcessor::new()?;
-        processor.post_success(self.issue_number, self.pr_number, self.preview_url.as_deref())?;
+        processor.post_success(
+            self.issue_number,
+            self.pr_number,
+            self.preview_url.as_deref(),
+        )?;
         Ok(())
     }
 }

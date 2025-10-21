@@ -1,7 +1,7 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 use crate::{
-    constants::{should_snake_case, IssueType},
+    constants::{IssueType, should_snake_case},
     schema::animation::{AnimationData, AnimationInfo},
 };
 
@@ -74,8 +74,8 @@ impl IssueParser {
             bail!("画像URLはhttp://またはhttps://で始まる必要があります");
         }
 
-        let animation = Self::extract_field(body, "Frametime（アニメーション用・任意）")
-            .and_then(|s| {
+        let animation =
+            Self::extract_field(body, "Frametime（アニメーション用・任意）").and_then(|s| {
                 if s == "_No response_" || s.is_empty() {
                     None
                 } else {

@@ -1,10 +1,10 @@
 pub mod add;
 pub mod extend;
+mod generates;
 mod metadata;
 mod models;
 mod runner;
 mod zip;
-mod generates;
 
 /// CLI for OfroPack - Minecraft Resource Pack Manager
 #[derive(Debug, clap::Parser)]

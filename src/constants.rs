@@ -7,7 +7,6 @@ pub enum IssueType {
     Extend,
 }
 
-
 use crate::constcat;
 
 pub const REPO_OWNER: &str = "TeamOfro";
@@ -32,7 +31,7 @@ impl Paths {
     pub const ITEMS: &str = "assets/minecraft/items";
     pub const MODELS: &str = "assets/minecraft/models/item";
     pub const TEXTURES: &str = "assets/minecraft/textures/item";
-    pub const PREVIEWS: &str = "previews";
+    pub const PREVIEWS: &str = "preview";
 
     pub fn assets_path() -> PathBuf {
         Self::root().join(Self::ASSETS)

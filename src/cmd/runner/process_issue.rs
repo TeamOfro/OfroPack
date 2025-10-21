@@ -21,7 +21,8 @@ pub struct ProcessIssue {
 impl Run for ProcessIssue {
     fn run(&self) -> Result<()> {
         let processor = IssueProcessor::new()?;
-        let result: ProcessResult = processor.process(self.issue_number, self.issue_type, &self.body)?;
+        let result: ProcessResult =
+            processor.process(self.issue_number, self.issue_type, &self.body)?;
 
         if let Some(preview_url) = result.preview_url {
             println!("PREVIEW_URL={}", preview_url);
