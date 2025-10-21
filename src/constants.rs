@@ -1,5 +1,12 @@
 use std::{path::PathBuf, str::FromStr};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum IssueType {
+    Add,
+    Extend,
+}
+
+
 use crate::constcat;
 
 pub const REPO_OWNER: &str = "TeamOfro";

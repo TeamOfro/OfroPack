@@ -1,9 +1,10 @@
-mod add;
-mod extend;
+pub mod add;
+pub mod extend;
 mod metadata;
 mod models;
 mod runner;
 mod zip;
+mod generates;
 
 /// CLI for OfroPack - Minecraft Resource Pack Manager
 #[derive(Debug, clap::Parser)]
@@ -15,6 +16,7 @@ pub enum Cmd {
     Metadata(metadata::Metadata),
     Zip(zip::Zip),
     Runner(runner::Runner),
+    Generates(generates::Generates),
 }
 
 pub trait Run {
@@ -30,6 +32,7 @@ impl Run for Cmd {
             Cmd::Metadata(cmd) => cmd.run(),
             Cmd::Zip(cmd) => cmd.run(),
             Cmd::Runner(cmd) => cmd.run(),
+            Cmd::Generates(cmd) => cmd.run(),
         }
     }
 }

@@ -1,5 +1,5 @@
-mod model;
-mod model3d;
+pub mod model;
+pub mod model3d;
 
 #[derive(clap::Parser, Debug)]
 pub struct Add {

@@ -33,6 +33,22 @@ pub struct Model {
     path_to_image: PathBuf,
 }
 
+impl Model {
+    pub fn new(
+        materials: Vec<String>,
+        custom_model_data: Option<String>,
+        frametime: Option<u32>,
+        path_to_image: PathBuf,
+    ) -> Self {
+        Self {
+            materials,
+            custom_model_data,
+            frametime,
+            path_to_image,
+        }
+    }
+}
+
 impl Run for Model {
     fn run(&self) -> anyhow::Result<()> {
         if self.materials.is_empty() {
