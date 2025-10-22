@@ -4,23 +4,23 @@ on:
   workflow_call:
     inputs:
       issue-type:
-        description: '処理タイプ（model: 2Dモデル追加, model3d: 3Dモデル追加, extend: マテリアル拡張）'
+        description: "処理タイプ（model: 2Dモデル追加, model3d: 3Dモデル追加, extend: マテリアル拡張）"
         required: true
         type: string
       issue-body:
-        description: 'Issue本文（パース用）'
+        description: "Issue本文（パース用）"
         required: true
         type: string
       issue-number:
-        description: 'Issue番号'
+        description: "Issue番号"
         required: true
         type: string
       actor:
-        description: 'Issue作成者のユーザー名'
+        description: "Issue作成者のユーザー名"
         required: true
         type: string
       actor-id:
-        description: 'Issue作成者のユーザーID'
+        description: "Issue作成者のユーザーID"
         required: true
         type: string
     secrets:
@@ -54,6 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.token }}
           PR_BRANCH: ${{ inputs.issue-type }}/issue-${{ inputs.issue-number }}
         run: |
+          set +e  # エラーでスクリプトを終了しない
+
           # Issue本文を環境変数として読み込み
           ISSUE_BODY=$(cat << 'ISSUE_EOF'
           ${{ inputs.issue-body }}
@@ -70,12 +72,19 @@ jobs:
 
           EXIT_CODE=$?
 
+          # 出力を表示
+          echo "$OUTPUT"
+
           # エラー時はエラーメッセージを保存して終了
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "Processing failed with exit code $EXIT_CODE"
-            echo "$OUTPUT"
-            echo "error_message=$(echo "$OUTPUT" | tail -n +1)" >> $GITHUB_OUTPUT
-            exit $EXIT_CODE
+            echo "error_occurred=true" >> $GITHUB_OUTPUT
+            # 複数行のエラーメッセージを正しく保存
+            {
+              echo "error_message<<EOF_ERROR_MESSAGE"
+              echo "$OUTPUT"
+              echo "EOF_ERROR_MESSAGE"
+            } >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: ❌ Issueにエラーコメントを投稿

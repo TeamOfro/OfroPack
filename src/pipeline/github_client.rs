@@ -44,8 +44,10 @@ struct PullRequestResponse {
 impl GitHubClient {
     /// Create new GitHub client from environment
     pub fn from_env() -> Result<Self> {
-        let token =
-            std::env::var("GITHUB_TOKEN").context("環境変数 GITHUB_TOKEN が設定されていません")?;
+        let token = std::env::var("GITHUB_TOKEN").context(
+            "❌ 環境変数 GITHUB_TOKEN が設定されていません。\n\
+             GitHub Actionsワークフローでは secrets.GITHUB_TOKEN を設定してください。",
+        )?;
         let client = Agent::config_builder()
             .user_agent("OfroPack-GitHub-Actions")
             .build()

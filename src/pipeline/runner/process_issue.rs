@@ -56,17 +56,22 @@ impl IssueProcessor {
         actor: &str,
         actor_email: &str,
     ) -> Result<()> {
-        println!("\n=== Issue #{}の処理を開始 ===\n", issue_number);
+        println!("\n🚀 === Issue #{}の処理を開始 ===\n", issue_number);
+        println!("📋 Issue種別: {:?}", issue_type);
+        println!("👤 作成者: {}", actor);
 
         // 1. Rocket reaction
+        println!("\n🚀 Rocketリアクションを追加中...");
         self.github_client
             .react_issue(issue_number, GithubReaction::Rocket)
-            .context("Reactionの追加に失敗しました")?;
+            .context("❌ Reactionの追加に失敗しました")?;
+        println!("✅ Rocketリアクションを追加しました");
 
         // 2. Parse issue
         println!("\n📝 Issueを解析中...");
         let parsed =
-            IssueParser::parse(issue_body, issue_type).context("Issueの解析に失敗しました")?;
+            IssueParser::parse(issue_body, issue_type).context("❌ Issueの解析に失敗しました")?;
+        println!("✅ Issueの解析が完了しました");
 
         // 3. Process based on issue type
         match parsed {
