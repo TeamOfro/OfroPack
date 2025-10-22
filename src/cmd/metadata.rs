@@ -1,4 +1,4 @@
-use crate::constants::REPO_URL;
+use crate::config::REPO_URL;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -176,7 +176,7 @@ impl Metadata {
                         "No title".to_string()
                     };
 
-                    let url = format!("{}/pull/{}", REPO_URL, number);
+                    let url = format!("{REPO_URL}/pull/{number}");
 
                     return Ok(Some(LatestPr { number, title, url }));
                 }

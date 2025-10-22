@@ -17,8 +17,8 @@ pub enum Subcommand {
 impl super::Run for Subcommand {
     fn run(&self) -> anyhow::Result<()> {
         match self {
-            Subcommand::Model(cmd) => cmd.run(),
-            Subcommand::Model3D(cmd) => cmd.run(),
+            Self::Model(cmd) => cmd.run(),
+            Self::Model3D(cmd) => cmd.run(),
         }
     }
 }

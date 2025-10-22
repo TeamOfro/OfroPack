@@ -1,8 +1,9 @@
 use anyhow::{Context, Result, bail};
 
 use crate::{
-    constants::{IssueType, ItemModelParent, should_snake_case},
     schema::animation::{AnimationData, AnimationInfo},
+    types::{IssueType, ItemModelParent},
+    validation::should_snake_case,
 };
 
 #[derive(Debug)]
@@ -37,7 +38,7 @@ impl IssueParser {
         }
     }
 
-    fn parse_model(body: &str) -> Result<ParsedIssue> {
+    fn parse_materials(body: &str) -> Result<Vec<String>> {
         let materials = Self::extract_field(body, "マテリアル")
             .context("マテリアルフィールドが見つかりません")?;
 
@@ -55,6 +56,10 @@ impl IssueParser {
             bail!("少なくとも1つのマテリアルを指定してください");
         }
 
+        Ok(materials)
+    }
+
+    fn parse_custom_model_data(body: &str) -> Result<String> {
         let custom_model_data = Self::extract_field(body, "カスタムモデルデータ名")
             .context("カスタムモデルデータ名フィールドが見つかりません")?;
 
@@ -63,6 +68,13 @@ impl IssueParser {
         }
 
         should_snake_case(&custom_model_data)?;
+
+        Ok(custom_model_data)
+    }
+
+    fn parse_model(body: &str) -> Result<ParsedIssue> {
+        let materials = Self::parse_materials(body)?;
+        let custom_model_data = Self::parse_custom_model_data(body)?;
 
         let image_url =
             Self::extract_field(body, "画像URL").context("画像URLフィールドが見つかりません")?;
@@ -103,26 +115,8 @@ impl IssueParser {
     }
 
     fn parse_model3d(body: &str) -> Result<ParsedIssue> {
-        let materials = Self::extract_field(body, "マテリアル")
-            .context("マテリアルフィールドが見つかりません")?;
-        if materials == "_No response_" || materials.is_empty() {
-            bail!("マテリアルは必須項目です");
-        }
-        let materials: Vec<String> = materials
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-        if materials.is_empty() {
-            bail!("少なくとも1つのマテリアルを指定してください");
-        }
-
-        let custom_model_data = Self::extract_field(body, "カスタムモデルデータ名")
-            .context("カスタムモデルデータ名フィールドが見つかりません")?;
-        if custom_model_data == "_No response_" || custom_model_data.is_empty() {
-            bail!("カスタムモデルデータ名は必須項目です");
-        }
-        should_snake_case(&custom_model_data)?;
+        let materials = Self::parse_materials(body)?;
+        let custom_model_data = Self::parse_custom_model_data(body)?;
 
         let model_json_url = Self::extract_field(body, "モデルJSONのURL")
             .context("モデルJSONのURLフィールドが見つかりません")?;
@@ -153,31 +147,8 @@ impl IssueParser {
     }
 
     fn parse_extend(body: &str) -> Result<ParsedIssue> {
-        let materials = Self::extract_field(body, "マテリアル")
-            .context("マテリアルフィールドが見つかりません")?;
-
-        if materials == "_No response_" || materials.is_empty() {
-            bail!("マテリアルは必須項目です");
-        }
-
-        let materials: Vec<String> = materials
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-
-        if materials.is_empty() {
-            bail!("少なくとも1つのマテリアルを指定してください");
-        }
-
-        let custom_model_data = Self::extract_field(body, "カスタムモデルデータ名")
-            .context("カスタムモデルデータ名フィールドが見つかりません")?;
-
-        if custom_model_data == "_No response_" || custom_model_data.is_empty() {
-            bail!("カスタムモデルデータ名は必須項目です");
-        }
-
-        should_snake_case(&custom_model_data)?;
+        let materials = Self::parse_materials(body)?;
+        let custom_model_data = Self::parse_custom_model_data(body)?;
 
         Ok(ParsedIssue::Extend {
             materials,

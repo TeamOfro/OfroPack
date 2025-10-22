@@ -4,16 +4,16 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::ItemModelParent,
     pipeline::image_validator::ImageValidator,
     schema::animation::{AnimationData, AnimationInfo},
+    types::ItemModelParent,
     utils::add as helpers,
 };
 
 #[derive(Debug, clap::Parser)]
 #[command(version, about)]
 pub struct Model {
-    /// カンマ区切りのマテリアルリスト (例: diamond_axe,iron_sword)
+    /// カンマ区切りのマテリアルリスト (例: `diamond_axe,iron_sword`)
     #[arg(short, long, value_delimiter = ',', required = true)]
     materials: Vec<String>,
 
@@ -34,7 +34,8 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(
+    #[must_use]
+    pub const fn new(
         materials: Vec<String>,
         custom_model_data: Option<String>,
         frametime: Option<u32>,
@@ -75,7 +76,7 @@ impl Run for Model {
 
         helpers::write_new_item_model(self.parent, &custom_model_data)?;
 
-        let texture_path = crate::constants::Paths::texture_path(&custom_model_data);
+        let texture_path = crate::paths::Paths::texture_path(&custom_model_data);
         std::fs::copy(&self.path_to_image, &texture_path).with_context(|| {
             format!(
                 "テクスチャファイルのコピーに失敗: {} -> {}",

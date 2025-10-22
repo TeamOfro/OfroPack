@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf};
 use anyhow::Context;
 use serde::Deserialize;
 
-use crate::constants::Paths;
+use crate::paths::Paths;
 
 #[derive(Debug, Deserialize)]
 pub struct ItemTextureEntry {
@@ -51,13 +51,12 @@ impl MaterialMapping {
     }
 
     pub fn resolve_fallback_model_path(&self, material: &str) -> anyhow::Result<String> {
-        let model = self.by_material.get(material).map(|s| s.as_str());
-        match model {
-            Some(m) => Ok(m.to_string()),
-            None => anyhow::bail!(
-                "マテリアル '{}' のフォールバックモデルが見つかりません",
-                material
-            ),
-        }
+        self.by_material
+            .get(material)
+            .map(String::as_str)
+            .map(String::from)
+            .ok_or_else(|| {
+                anyhow::anyhow!("マテリアル '{material}' のフォールバックモデルが見つかりません")
+            })
     }
 }

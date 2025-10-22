@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use image::{ImageFormat, ImageReader};
 use std::path::{Path, PathBuf};
 
-use crate::constants::Paths;
+use crate::paths::Paths;
 
 pub struct PreviewGenerator;
 

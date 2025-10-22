@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::constants::ItemModelParent;
+use crate::types::ItemModelParent;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ItemModel {
@@ -28,13 +28,13 @@ impl ItemModel {
 impl Textures {
     pub fn add_custom(&mut self, custom_model_data: &str) {
         self.0
-            .insert("layer0".to_string(), format!("item/{}", custom_model_data));
+            .insert("layer0".to_string(), format!("item/{custom_model_data}"));
     }
 
     fn add_layer(&mut self, custom_model_data: &str, layer_number: usize) {
-        let key = format!("{}", layer_number);
+        let key = layer_number.to_string();
         self.0
-            .insert(key, format!("item/{}/{}", custom_model_data, layer_number));
+            .insert(key, format!("item/{custom_model_data}/{layer_number}"));
     }
 
     /// return the number of overwritten layers
@@ -42,7 +42,7 @@ impl Textures {
         let keys = self
             .0
             .keys()
-            .filter(|k| k.chars().all(|c| c.is_numeric()))
+            .filter(|k| k.chars().all(char::is_numeric))
             .count();
 
         self.0.clear();

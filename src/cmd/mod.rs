@@ -26,13 +26,13 @@ pub trait Run {
 impl Run for Cmd {
     fn run(&self) -> anyhow::Result<()> {
         match self {
-            Cmd::Add(cmd) => cmd.run(),
-            Cmd::Extend(cmd) => cmd.run(),
-            Cmd::Models(cmd) => cmd.run(),
-            Cmd::Metadata(cmd) => cmd.run(),
-            Cmd::Zip(cmd) => cmd.run(),
-            Cmd::Runner(cmd) => cmd.run(),
-            Cmd::Generates(cmd) => cmd.run(),
+            Self::Add(cmd) => cmd.run(),
+            Self::Extend(cmd) => cmd.run(),
+            Self::Models(cmd) => cmd.run(),
+            Self::Metadata(cmd) => cmd.run(),
+            Self::Zip(cmd) => cmd.run(),
+            Self::Runner(cmd) => cmd.run(),
+            Self::Generates(cmd) => cmd.run(),
         }
     }
 }

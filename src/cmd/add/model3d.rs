@@ -4,17 +4,18 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::{Paths, should_snake_case},
+    paths::Paths,
     pipeline::image_validator::ImageValidator,
     schema::models::ItemModel,
     utils::add as helpers,
     utils::json::{merge_json, read_json, write_json},
+    validation::should_snake_case,
 };
 
 #[derive(Debug, clap::Parser)]
 #[command(version, about)]
 pub struct Model3D {
-    /// カンマ区切りのマテリアルリスト (例: diamond_axe,iron_sword)
+    /// カンマ区切りのマテリアルリスト (例: `diamond_axe,iron_sword`)
     #[arg(short, long, value_delimiter = ',', required = true)]
     materials: Vec<String>,
 
@@ -22,7 +23,7 @@ pub struct Model3D {
     #[arg(short, long)]
     custom_model_data: String,
 
-    /// モデルのJson
+    /// モデルのJSON
     model_json_file: PathBuf,
 
     /// レイヤー画像ファイルのパス (複数指定可能)
@@ -31,7 +32,8 @@ pub struct Model3D {
 }
 
 impl Model3D {
-    pub fn new(
+    #[must_use]
+    pub const fn new(
         materials: Vec<String>,
         custom_model_data: String,
         model_json_file: PathBuf,
@@ -96,7 +98,7 @@ impl Run for Model3D {
             )
         })?;
 
-        model_value.get_mut("textures").map(|t| t.take());
+        model_value.get_mut("textures").map(serde_json::Value::take);
         merge_json(&mut model_value, &model);
         write_json(&model_path, &model_value).with_context(|| {
             format!(
