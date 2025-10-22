@@ -4,11 +4,12 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::{Paths, should_snake_case},
+    paths::Paths,
     pipeline::image_validator::ImageValidator,
     schema::models::ItemModel,
     utils::add as helpers,
     utils::json::{merge_json, read_json, write_json},
+    validation::should_snake_case,
 };
 
 #[derive(Debug, clap::Parser)]

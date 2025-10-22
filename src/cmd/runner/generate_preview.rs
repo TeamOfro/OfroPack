@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use crate::{
     cmd::Run,
-    constants::{REPO_NAME, REPO_OWNER},
+    config::{REPO_NAME, REPO_OWNER},
     pipeline::preview_generator::PreviewGenerator,
 };
 

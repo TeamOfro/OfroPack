@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::constants::ItemModelParent;
+use crate::types::ItemModelParent;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ItemModel {

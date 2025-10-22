@@ -3,7 +3,7 @@ use std::process::ExitCode;
 use clap::Parser;
 use processor::{
     cmd::{Cmd, Run},
-    constants::Paths,
+    paths::Paths,
 };
 
 pub fn main() -> ExitCode {

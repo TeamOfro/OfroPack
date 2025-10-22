@@ -3,13 +3,14 @@ use tempfile::tempdir;
 
 use crate::{
     cmd::{Run, add, extend},
-    constants::{IssueType, REPO_NAME, REPO_OWNER},
+    config::{REPO_NAME, REPO_OWNER},
     pipeline::{
         github_client::GitHubClient,
         image_downloader::ImageDownloader,
         preview_generator::PreviewGenerator,
         runner::issue_parser::{IssueParser, ParsedIssue},
     },
+    types::IssueType,
 };
 
 pub struct IssueProcessor {
@@ -40,7 +41,7 @@ impl IssueProcessor {
         println!("\n=== Issue #{}の処理を開始 ===\n", issue_number);
 
         self.github_client
-            .react_issue(issue_number, crate::constants::GithubReaction::Rocket)
+            .react_issue(issue_number, crate::types::GithubReaction::Rocket)
             .context("Reactionの追加に失敗しました")?;
 
         println!("\n📝 Issueを解析中...");
@@ -81,7 +82,7 @@ impl IssueProcessor {
                 add_cmd.run()?;
 
                 println!("\n🖼️  プレビュー画像を生成中...");
-                let texture_path = crate::constants::Paths::texture_path(&custom_model_data);
+                let texture_path = crate::paths::Paths::texture_path(&custom_model_data);
                 let preview_path = PreviewGenerator::generate(&texture_path, &custom_model_data)
                     .context("プレビュー画像の生成に失敗しました")?;
 
@@ -208,7 +209,7 @@ impl IssueProcessor {
             .context("成功コメントの投稿に失敗しました")?;
 
         self.github_client
-            .react_issue(issue_number, crate::constants::GithubReaction::ThumbsUp)
+            .react_issue(issue_number, crate::types::GithubReaction::ThumbsUp)
             .context("Reactionの追加に失敗しました")?;
 
         Ok(())
@@ -244,7 +245,7 @@ impl IssueProcessor {
             .context("成功コメントの投稿に失敗しました")?;
 
         self.github_client
-            .react_issue(issue_number, crate::constants::GithubReaction::ThumbsUp)
+            .react_issue(issue_number, crate::types::GithubReaction::ThumbsUp)
             .context("Reactionの追加に失敗しました")?;
 
         Ok(())
@@ -282,7 +283,7 @@ impl IssueProcessor {
             .context("エラーコメントの投稿に失敗しました")?;
 
         self.github_client
-            .react_issue(issue_number, crate::constants::GithubReaction::ThumbsDown)
+            .react_issue(issue_number, crate::types::GithubReaction::ThumbsDown)
             .context("Reactionの追加に失敗しました")?;
 
         self.github_client

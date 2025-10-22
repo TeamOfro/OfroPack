@@ -1,6 +1,6 @@
 use anyhow::Context;
 
-use crate::{cmd::Run, constants::GithubReaction};
+use crate::{cmd::Run, types::GithubReaction};
 
 #[derive(clap::Parser, Debug)]
 pub struct Reaction {
