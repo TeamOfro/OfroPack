@@ -72,11 +72,8 @@ jobs:
 
           # エラー時はエラーメッセージを保存して終了
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "error_occurred=true" >> $GITHUB_OUTPUT
-            echo "error_message<<EOF" >> $GITHUB_OUTPUT
-            echo "$OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            exit 1
+            echo "error_message=$(echo "$OUTPUT" | tail -n +1)" >> $GITHUB_OUTPUT
+            exit $EXIT_CODE
           fi
 
       - name: ❌ Issueにエラーコメントを投稿
