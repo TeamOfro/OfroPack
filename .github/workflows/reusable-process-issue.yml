@@ -72,6 +72,8 @@ jobs:
 
           # エラー時はエラーメッセージを保存して終了
           if [ $EXIT_CODE -ne 0 ]; then
+            echo "Processing failed with exit code $EXIT_CODE"
+            echo "$OUTPUT"
             echo "error_message=$(echo "$OUTPUT" | tail -n +1)" >> $GITHUB_OUTPUT
             exit $EXIT_CODE
           fi
