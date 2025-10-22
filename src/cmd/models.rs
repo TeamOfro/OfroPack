@@ -9,7 +9,7 @@ use image::GenericImageView;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    paths::Paths,
+    constants::Paths,
     schema::{animation::AnimationInfo, items::ItemResource},
     utils::json::{read_json, write_json},
 };

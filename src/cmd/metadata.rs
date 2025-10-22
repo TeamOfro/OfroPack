@@ -1,4 +1,4 @@
-use crate::config::REPO_URL;
+use crate::constants::REPO_URL;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;

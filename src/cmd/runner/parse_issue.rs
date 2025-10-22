@@ -2,8 +2,8 @@ use anyhow::Result;
 
 use crate::{
     cmd::Run,
+    constants::IssueType,
     pipeline::runner::issue_parser::{IssueParser, ParsedIssue},
-    types::IssueType,
 };
 
 #[derive(clap::Parser, Debug)]

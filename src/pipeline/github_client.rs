@@ -2,10 +2,7 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use ureq::{Agent, RequestBuilder, typestate::WithBody};
 
-use crate::{
-    config::{REPO_NAME, REPO_OWNER},
-    types::GithubReaction,
-};
+use crate::constants::{GithubReaction, REPO_NAME, REPO_OWNER};
 
 /// GitHub API client for Actions
 pub struct GitHubClient {

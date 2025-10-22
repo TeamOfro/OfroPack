@@ -3,17 +3,15 @@ use std::path::Path;
 use anyhow::Context;
 
 use crate::{
-    paths::Paths,
+    constants::{ItemModelParent, Paths, should_snake_case},
     schema::{
         items::{ItemCase, ItemResource},
         models::ItemModel,
     },
-    types::ItemModelParent,
     utils::{
         json::{read_json, write_json},
         materials::MaterialMapping,
     },
-    validation::should_snake_case,
 };
 
 pub fn validate_materials(materials: &[String]) -> anyhow::Result<()> {

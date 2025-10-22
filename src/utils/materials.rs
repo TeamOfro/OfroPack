@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf};
 use anyhow::Context;
 use serde::Deserialize;
 
-use crate::paths::Paths;
+use crate::constants::Paths;
 
 #[derive(Debug, Deserialize)]
 pub struct ItemTextureEntry {

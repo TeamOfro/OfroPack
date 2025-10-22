@@ -1,9 +1,8 @@
 use anyhow::{Context, Result, bail};
 
 use crate::{
+    constants::{IssueType, ItemModelParent, should_snake_case},
     schema::animation::{AnimationData, AnimationInfo},
-    types::{IssueType, ItemModelParent},
-    validation::should_snake_case,
 };
 
 #[derive(Debug)]

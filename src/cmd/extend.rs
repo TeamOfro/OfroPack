@@ -1,10 +1,9 @@
 use anyhow::Context;
 
 use crate::{
-    paths::Paths,
+    constants::{Paths, should_snake_case},
     schema::items::{ItemCase, ItemResource},
     utils::json::{read_json, write_json},
-    validation::should_snake_case,
 };
 
 /// 既存のカスタムモデルデータをまだ適用していないmaterialに適用する
