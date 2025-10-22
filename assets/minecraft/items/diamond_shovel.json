@@ -13,6 +13,13 @@
           "type": "minecraft:model",
           "model": "item/shovel_100yen"
         }
+      },
+      {
+        "when": "hot_desire",
+        "model": {
+          "type": "minecraft:model",
+          "model": "item/hot_desire"
+        }
       }
     ]
   }
