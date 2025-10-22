@@ -1,45 +1,40 @@
-mod close;
-mod comment;
-mod generate_preview;
-mod parse_issue;
-mod post_extend_success;
 mod post_failure;
-mod post_success;
 mod process_issue;
-mod reaction;
 
+/// 🤖 GitHub Actions用ランナー
+///
+/// CI/CD環境でIssue処理などを実行します。
 #[derive(Debug, clap::Parser)]
+#[command(
+    about = "GitHub Actions用ランナー",
+    long_about = "CI/CD環境でIssue処理などを実行します。\n\n\
+                  通常、このコマンドは手動で使用することはありません。"
+)]
 pub struct Runner {
     #[command(subcommand)]
     pub subcommand: RunnerSubcommand,
 }
 
+/// サブコマンド
 #[derive(Debug, clap::Subcommand)]
 #[command(version, about)]
 pub enum RunnerSubcommand {
+    /// 📝 Issueを処理してPRを作成
+    ///
+    /// GitHub IssueからカスタムモデルデータやPRを自動生成します。
     ProcessIssue(process_issue::ProcessIssue),
-    ParseIssue(parse_issue::ParseIssue),
-    PostSuccess(post_success::PostSuccess),
-    PostExtendSuccess(post_extend_success::PostExtendSuccess),
+
+    /// ❌ 失敗時にIssueにコメントを投稿
+    ///
+    /// ワークフロー失敗時にエラーメッセージをIssueに投稿します。
     PostFailure(post_failure::PostFailure),
-    GeneratePreview(generate_preview::GeneratePreview),
-    Comment(comment::Comment),
-    Reaction(reaction::Reaction),
-    Close(close::Close),
 }
 
 impl super::Run for RunnerSubcommand {
     fn run(&self) -> anyhow::Result<()> {
         match self {
-            RunnerSubcommand::ProcessIssue(cmd) => cmd.run(),
-            RunnerSubcommand::ParseIssue(cmd) => cmd.run(),
-            RunnerSubcommand::PostSuccess(cmd) => cmd.run(),
-            RunnerSubcommand::PostExtendSuccess(cmd) => cmd.run(),
-            RunnerSubcommand::PostFailure(cmd) => cmd.run(),
-            RunnerSubcommand::GeneratePreview(cmd) => cmd.run(),
-            RunnerSubcommand::Comment(cmd) => cmd.run(),
-            RunnerSubcommand::Reaction(cmd) => cmd.run(),
-            RunnerSubcommand::Close(cmd) => cmd.run(),
+            Self::ProcessIssue(cmd) => cmd.run(),
+            Self::PostFailure(cmd) => cmd.run(),
         }
     }
 }

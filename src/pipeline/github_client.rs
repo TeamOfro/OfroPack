@@ -1,8 +1,11 @@
 use anyhow::{Context, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ureq::{Agent, RequestBuilder, typestate::WithBody};
 
-use crate::constants::{GithubReaction, REPO_NAME, REPO_OWNER};
+use crate::{
+    config::{REPO_NAME, REPO_OWNER},
+    types::GithubReaction,
+};
 
 /// GitHub API client for Actions
 pub struct GitHubClient {
@@ -23,6 +26,19 @@ struct ReactionRequest {
 #[derive(Debug, Serialize)]
 struct IssueStateRequest {
     state: String,
+}
+
+#[derive(Debug, Serialize)]
+struct CreatePullRequestRequest {
+    title: String,
+    body: String,
+    head: String,
+    base: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct PullRequestResponse {
+    number: u64,
 }
 
 impl GitHubClient {
@@ -93,10 +109,48 @@ impl GitHubClient {
         Ok(())
     }
 
+    /// Create a pull request
+    pub fn create_pull_request(
+        &self,
+        head: &str,
+        base: &str,
+        title: &str,
+        body: &str,
+    ) -> Result<u64> {
+        let request = CreatePullRequestRequest {
+            title: title.to_string(),
+            body: body.to_string(),
+            head: head.to_string(),
+            base: base.to_string(),
+        };
+
+        let url = format!(
+            "https://api.github.com/repos/{}/{}/pulls",
+            REPO_OWNER, REPO_NAME
+        );
+
+        let response: PullRequestResponse = self
+            .post_request_with_response(&url, &request)
+            .context("プルリクエストの作成に失敗しました")?;
+
+        println!("✓ プルリクエスト #{} を作成しました", response.number);
+        Ok(response.number)
+    }
+
     /// Make POST request to GitHub API
     fn post_request<T: Serialize>(&self, url: &str, body: &T) -> Result<()> {
         let request = self.client.post(url);
         self.inner_request(request, body, "POST")
+    }
+
+    /// Make POST request to GitHub API with response
+    fn post_request_with_response<T: Serialize, R: for<'de> Deserialize<'de>>(
+        &self,
+        url: &str,
+        body: &T,
+    ) -> Result<R> {
+        let request = self.client.post(url);
+        self.inner_request_with_response(request, body, "POST")
     }
 
     /// Make PATCH request to GitHub API
@@ -125,5 +179,31 @@ impl GitHubClient {
         }
 
         Ok(())
+    }
+
+    fn inner_request_with_response<T: Serialize, R: for<'de> Deserialize<'de>>(
+        &self,
+        request: RequestBuilder<WithBody>,
+        body: &T,
+        method: &str,
+    ) -> Result<R> {
+        let mut response = request
+            .header("Authorization", format!("Bearer {}", self.token))
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .send_json(body)
+            .with_context(|| format!("{} リクエストの送信に失敗しました", method))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            anyhow::bail!("APIリクエストに失敗しました ({})", status);
+        }
+
+        let result: R = response
+            .body_mut()
+            .read_json()
+            .context("レスポンスのパースに失敗しました")?;
+
+        Ok(result)
     }
 }

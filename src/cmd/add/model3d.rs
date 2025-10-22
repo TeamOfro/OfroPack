@@ -4,34 +4,65 @@ use anyhow::Context;
 
 use crate::{
     cmd::Run,
-    constants::{Paths, should_snake_case},
+    paths::Paths,
     pipeline::image_validator::ImageValidator,
     schema::models::ItemModel,
     utils::add as helpers,
     utils::json::{merge_json, read_json, write_json},
+    validation::should_snake_case,
 };
 
+/// 🎲 3Dモデル（JSON + レイヤー）を追加
+///
+/// モデルJSONファイルと複数のテクスチャレイヤーから3Dモデルを作成し、
+/// 指定したマテリアルに適用します。
 #[derive(Debug, clap::Parser)]
-#[command(version, about)]
+#[command(
+    about = "3Dモデルを追加",
+    long_about = "モデルJSONファイルと複数のテクスチャレイヤーから3Dモデルを作成します。\n\n\
+                  モデルJSON内のテクスチャパスは自動的に更新されます。"
+)]
 pub struct Model3D {
-    /// カンマ区切りのマテリアルリスト (例: diamond_axe,iron_sword)
-    #[arg(short, long, value_delimiter = ',', required = true)]
+    /// カンマ区切りのマテリアルリスト
+    ///
+    /// 例: diamond_axe,iron_sword,golden_pickaxe
+    #[arg(
+        short,
+        long,
+        value_delimiter = ',',
+        required = true,
+        value_name = "MATERIALS",
+        help = "適用するマテリアル（カンマ区切り）"
+    )]
     materials: Vec<String>,
 
     /// カスタムモデルデータ名
-    #[arg(short, long)]
+    ///
+    /// スネークケース（小文字 + アンダースコア）で指定してください。
+    #[arg(short, long, value_name = "NAME", help = "カスタムモデルデータ名")]
     custom_model_data: String,
 
-    /// モデルのJson
+    /// モデルのJSONファイル
+    ///
+    /// Minecraft形式のモデルJSONファイルを指定します。
+    #[arg(value_name = "MODEL_JSON", help = "モデルJSONファイルのパス")]
     model_json_file: PathBuf,
 
-    /// レイヤー画像ファイルのパス (複数指定可能)
-    #[arg(required = true)]
+    /// レイヤー画像ファイルのパス（複数指定可能）
+    ///
+    /// モデルで使用するテクスチャレイヤーをすべて指定します。
+    /// PNG形式で、モデルJSONで定義されたレイヤー数と一致する必要があります。
+    #[arg(
+        required = true,
+        value_name = "LAYER_IMAGES",
+        help = "テクスチャレイヤー画像（PNG）のパス"
+    )]
     layer_images: Vec<PathBuf>,
 }
 
 impl Model3D {
-    pub fn new(
+    #[must_use]
+    pub const fn new(
         materials: Vec<String>,
         custom_model_data: String,
         model_json_file: PathBuf,
@@ -96,7 +127,7 @@ impl Run for Model3D {
             )
         })?;
 
-        model_value.get_mut("textures").map(|t| t.take());
+        model_value.get_mut("textures").map(serde_json::Value::take);
         merge_json(&mut model_value, &model);
         write_json(&model_path, &model_value).with_context(|| {
             format!(

@@ -9,14 +9,29 @@ use image::GenericImageView;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    constants::Paths,
+    paths::Paths,
     schema::{animation::AnimationInfo, items::ItemResource},
     utils::json::{read_json, write_json},
 };
 
+/// 📊 ギャラリー用モデルデータ生成
+///
+/// Webギャラリー表示用のmodels.jsonを生成します。
+/// すべてのモデルとマテリアルの情報を収集し、JSON形式で出力します。
 #[derive(clap::Parser, Debug)]
+#[command(
+    about = "ギャラリー用モデルデータを生成",
+    long_about = "Webギャラリー表示用のmodels.jsonを生成します。\n\n\
+                  すべてのモデル、テクスチャ、マテリアルの情報を収集し、\n\
+                  JSON形式で出力します。Gitメタデータも含まれます。"
+)]
 pub struct Models {
-    #[clap(default_value = "models.json")]
+    /// 出力ファイルパス
+    #[arg(
+        default_value = "models.json",
+        value_name = "OUTPUT",
+        help = "出力JSONファイルのパス"
+    )]
     pub output: PathBuf,
 }
 
@@ -45,97 +60,15 @@ pub struct AnimationMetadata {
 
 impl super::Run for Models {
     fn run(&self) -> anyhow::Result<()> {
-        let mut material_map_by_model: HashMap<String, Vec<String>> = HashMap::new();
-
-        for entry in std::fs::read_dir(Paths::ITEMS)
-            .context("アイテムディレクトリの読み込みに失敗")?
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
-        {
-            let material_path = entry.path();
-            let material = material_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("")
-                .to_string();
-            if material.is_empty() {
-                eprintln!("  ✗ 無効なアイテムファイル名: {:?}", material_path);
-                continue;
-            }
-            let item_resource = read_json::<ItemResource>(&material_path).with_context(|| {
-                format!(
-                    "アイテムリソースの読み込みに失敗: {}",
-                    material_path.display()
-                )
-            })?;
-            item_resource
-                .model
-                .cases
-                .iter()
-                .map(|case| case.when.clone())
-                .for_each(|model_name| {
-                    material_map_by_model
-                        .entry(model_name)
-                        .or_default()
-                        .push(material.clone());
-                });
-        }
-
-        // shadowing without mutability
-        let material_map_by_model = material_map_by_model;
-
-        let model_files: Vec<_> = std::fs::read_dir(Paths::MODELS)
-            .context("モデルディレクトリの読み込みに失敗")?
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
-            .collect();
+        let material_map_by_model = Self::build_material_map()?;
+        let model_files = Self::collect_model_files()?;
 
         println!("  ✓ {} 個のモデルファイルを検出", model_files.len());
 
-        let mut models = Vec::<ModelInfo>::new();
-
-        for entry in model_files {
-            let model_path = entry.path();
-            let model_name = model_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("")
-                .to_string();
-
-            if model_name.is_empty() {
-                eprintln!("  ✗ 無効なモデルファイル名: {:?}", model_path);
-                continue;
-            }
-
-            let texture_path = Paths::texture_path(&model_name);
-            let texture_path_dir = Paths::texture_path_dir(&model_name);
-            let texture_path = if texture_path_dir.is_dir() {
-                None
-            } else if !texture_path.exists() {
-                eprintln!("  ✗ テクスチャファイルが存在しません: {:?}", texture_path);
-                continue;
-            } else {
-                Some(texture_path)
-            };
-
-            let added_date =
-                find_git_added_data(&model_path).context("Gitメタデータの取得に失敗")?;
-            let animation_metadata = find_animation_metadata(&model_name)
-                .context("アニメーションメタデータの取得に失敗")?;
-
-            let model_info = ModelInfo {
-                name: model_name.clone(),
-                materials: material_map_by_model
-                    .get(&model_name)
-                    .cloned()
-                    .unwrap_or_default(),
-                texture_path: texture_path.map(|v| v.to_string_lossy().to_string()),
-                added_date,
-                animation: animation_metadata,
-            };
-
-            models.push(model_info);
-        }
+        let models: Vec<ModelInfo> = model_files
+            .into_iter()
+            .filter_map(|entry| Self::process_model_file(entry, &material_map_by_model).ok())
+            .collect();
 
         let models_data = ModelsData {
             count: models.len(),
@@ -152,6 +85,105 @@ impl super::Run for Models {
         Ok(())
     }
 }
+
+impl Models {
+    fn extract_file_stem(path: &Path) -> Option<String> {
+        path.file_stem()
+            .and_then(|s| s.to_str())
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+    }
+
+    fn build_material_map() -> anyhow::Result<HashMap<String, Vec<String>>> {
+        let mut material_map_by_model: HashMap<String, Vec<String>> = HashMap::new();
+
+        for entry in std::fs::read_dir(Paths::ITEMS)
+            .context("アイテムディレクトリの読み込みに失敗")?
+            .filter_map(std::result::Result::ok)
+            .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
+        {
+            let material_path = entry.path();
+            let Some(material) = Self::extract_file_stem(&material_path) else {
+                eprintln!("  ✗ 無効なアイテムファイル名: {:?}", material_path);
+                continue;
+            };
+
+            let item_resource = read_json::<ItemResource>(&material_path).with_context(|| {
+                format!(
+                    "アイテムリソースの読み込みに失敗: {}",
+                    material_path.display()
+                )
+            })?;
+
+            for case in &item_resource.model.cases {
+                material_map_by_model
+                    .entry(case.when.clone())
+                    .or_default()
+                    .push(material.clone());
+            }
+        }
+
+        Ok(material_map_by_model)
+    }
+
+    fn collect_model_files() -> anyhow::Result<Vec<std::fs::DirEntry>> {
+        std::fs::read_dir(Paths::MODELS)
+            .context("モデルディレクトリの読み込みに失敗")?
+            .filter_map(std::result::Result::ok)
+            .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
+            .collect::<Vec<_>>()
+            .pipe(Ok)
+    }
+
+    fn process_model_file(
+        entry: std::fs::DirEntry,
+        material_map_by_model: &HashMap<String, Vec<String>>,
+    ) -> anyhow::Result<ModelInfo> {
+        let model_path = entry.path();
+        let Some(model_name) = Self::extract_file_stem(&model_path) else {
+            eprintln!("  ✗ 無効なモデルファイル名: {:?}", model_path);
+            anyhow::bail!("Invalid model file name");
+        };
+
+        let texture_path = Paths::texture_path(&model_name);
+        let texture_path_dir = Paths::texture_path_dir(&model_name);
+        let texture_path = if texture_path_dir.is_dir() {
+            None
+        } else if !texture_path.exists() {
+            eprintln!("  ✗ テクスチャファイルが存在しません: {:?}", texture_path);
+            anyhow::bail!("Texture file not found");
+        } else {
+            Some(texture_path)
+        };
+
+        let added_date = find_git_added_data(&model_path).context("Gitメタデータの取得に失敗")?;
+        let animation_metadata =
+            find_animation_metadata(&model_name).context("アニメーションメタデータの取得に失敗")?;
+
+        Ok(ModelInfo {
+            name: model_name.clone(),
+            materials: material_map_by_model
+                .get(&model_name)
+                .cloned()
+                .unwrap_or_default(),
+            texture_path: texture_path.map(|v| v.to_string_lossy().to_string()),
+            added_date,
+            animation: animation_metadata,
+        })
+    }
+}
+
+/// Helper trait for method chaining
+trait Pipe: Sized {
+    fn pipe<F, R>(self, f: F) -> R
+    where
+        F: FnOnce(Self) -> R,
+    {
+        f(self)
+    }
+}
+
+impl<T> Pipe for T {}
 
 /// Get git metadata for a file
 fn find_git_added_data(file_path: &Path) -> anyhow::Result<String> {

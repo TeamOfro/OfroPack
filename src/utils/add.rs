@@ -3,15 +3,17 @@ use std::path::Path;
 use anyhow::Context;
 
 use crate::{
-    constants::{ItemModelParent, Paths, should_snake_case},
+    paths::Paths,
     schema::{
         items::{ItemCase, ItemResource},
         models::ItemModel,
     },
+    types::ItemModelParent,
     utils::{
         json::{read_json, write_json},
         materials::MaterialMapping,
     },
+    validation::should_snake_case,
 };
 
 pub fn validate_materials(materials: &[String]) -> anyhow::Result<()> {
@@ -100,10 +102,7 @@ pub fn update_materials(materials: &[String], custom_model_data: &str) -> anyhow
                 material_path.display()
             )
         })?;
-        println!(
-            "カスタムモデルデータ '{}' をマテリアル '{}' に追加しました",
-            custom_model_data, material
-        );
+        println!("  ✓ マテリアル '{}' に追加完了", material);
     }
     Ok(())
 }

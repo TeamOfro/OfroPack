@@ -1,25 +1,54 @@
 use anyhow::Context;
 
 use crate::{
-    constants::{Paths, should_snake_case},
+    paths::Paths,
     schema::items::{ItemCase, ItemResource},
     utils::json::{read_json, write_json},
+    validation::should_snake_case,
 };
 
-/// 既存のカスタムモデルデータをまだ適用していないmaterialに適用する
+/// 🔧 既存モデルにマテリアルを追加
+///
+/// 既に存在するカスタムモデルデータに、新しいマテリアルを適用します。
+/// モデルファイルは既に存在している必要があります。
 #[derive(clap::Parser, Debug)]
+#[command(
+    about = "既存モデルにマテリアルを追加",
+    long_about = "既に作成済みのカスタムモデルデータに、新しいマテリアルを適用します。\n\n\
+                  モデルファイル（JSON）は既に存在している必要があります。\n\
+                  テクスチャファイルの存在は不要です（3Dモデルの場合など）。"
+)]
 pub struct Extend {
-    /// カンマ区切りの material list
-    #[arg(short, long, value_delimiter = ',', required = true)]
+    /// カンマ区切りのマテリアルリスト
+    ///
+    /// 例: diamond_axe,iron_sword,golden_pickaxe
+    #[arg(
+        short,
+        long,
+        value_delimiter = ',',
+        required = true,
+        value_name = "MATERIALS",
+        help = "追加するマテリアル（カンマ区切り）"
+    )]
     pub materials: Vec<String>,
 
     /// カスタムモデルデータ名
-    #[arg(short, long, required = true)]
+    ///
+    /// 既に存在するカスタムモデルデータの名前を指定します。
+    #[arg(
+        short,
+        long,
+        required = true,
+        value_name = "NAME",
+        help = "既存のカスタムモデルデータ名"
+    )]
     pub custom_model_data: String,
 }
 
 impl super::Run for Extend {
     fn run(&self) -> anyhow::Result<()> {
+        println!("\n🔧 マテリアル拡張を開始します...\n");
+
         if self.materials.is_empty() {
             anyhow::bail!("少なくとも1つのmaterialを指定してください。");
         }
@@ -35,16 +64,16 @@ impl super::Run for Extend {
         let model_path = Paths::model_path(&self.custom_model_data);
         if !model_path.exists() {
             anyhow::bail!(
-                "モデルファイルが存在しません: {}",
+                "❌ モデルファイルが存在しません: {}",
                 model_path.to_string_lossy()
             );
         }
 
+        println!("📋 対象モデル: {}", self.custom_model_data);
+        println!("📦 追加マテリアル: {}\n", self.materials.join(", "));
+
         for material in &self.materials {
-            println!(
-                "マテリアル '{}' に custom_model_data '{}' を追加します...",
-                material, self.custom_model_data
-            );
+            println!("  ➜ マテリアル '{}' に適用中...", material);
 
             extend_material(&self.custom_model_data, material).with_context(|| {
                 format!(
@@ -56,7 +85,7 @@ impl super::Run for Extend {
 
         let added_materials = self.materials.join(", ");
         println!(
-            "✓ マテリアル [{}] に custom_model_data '{}' を追加しました",
+            "\n✅ マテリアル [{}] に custom_model_data '{}' を追加しました\n",
             added_materials, self.custom_model_data
         );
 
@@ -87,7 +116,7 @@ fn extend_material(custom_model_data: &str, material: &str) -> anyhow::Result<()
         .any(|case| case.when == custom_model_data)
     {
         println!(
-            "  WARN: custom_model_data '{}' はすでに material '{}' に適用されています。",
+            "  ⚠️  custom_model_data '{}' はすでにマテリアル '{}' に適用されています（スキップ）",
             custom_model_data, material
         );
         return Ok(());
@@ -104,6 +133,8 @@ fn extend_material(custom_model_data: &str, material: &str) -> anyhow::Result<()
             material_path.display()
         )
     })?;
+
+    println!("  ✓ 追加完了");
 
     Ok(())
 }
