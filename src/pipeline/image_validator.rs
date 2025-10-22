@@ -71,8 +71,8 @@ impl ImageValidator {
     /// - 静止画の場合、正方形でない場合
     pub fn should_model(&self, info: Option<&AnimationInfo>) -> anyhow::Result<()> {
         let (width, height) = self.dimensions;
-        if !is_pow_of_two(width) || !is_pow_of_two(height) {
-            anyhow::bail!("画像の幅と高さは2の累乗である必要があります (16,32,64)");
+        if !is_pow_of_two(width) {
+            anyhow::bail!("画像の幅は2の累乗である必要があります (16,32,64)");
         }
         if let Some(animation_info) = info {
             let frame_count = height / width;
