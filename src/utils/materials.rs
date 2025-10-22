@@ -1,3 +1,8 @@
+//! マテリアルマッピング管理
+//!
+//! `items_textures.json` からマテリアルとテクスチャのマッピングを
+//! 読み込み、管理します。
+
 use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Context;
@@ -5,18 +10,29 @@ use serde::Deserialize;
 
 use crate::paths::Paths;
 
+/// アイテムテクスチャエントリ
 #[derive(Debug, Deserialize)]
 pub struct ItemTextureEntry {
+    /// アイテム名
     pub name: String,
+    /// テクスチャパス
     pub texture: String,
 }
 
+/// マテリアルマッピング
+///
+/// マテリアル名からフォールバックモデルパスへのマッピングを管理します。
 #[derive(Debug, Default, Clone)]
 pub struct MaterialMapping {
     by_material: HashMap<String, String>,
 }
 
 impl MaterialMapping {
+    /// `items_textures.json` からマッピングを読み込む
+    ///
+    /// # Errors
+    ///
+    /// ファイルの読み込みまたはパースに失敗した場合
     pub fn load() -> anyhow::Result<Self> {
         let path = PathBuf::from(Paths::ITEMS_TEXTURES);
         let data = std::fs::read_to_string(&path)
@@ -46,10 +62,16 @@ impl MaterialMapping {
         Ok(Self { by_material })
     }
 
+    /// マテリアルが存在するか確認
     pub fn contains(&self, material: &str) -> bool {
         self.by_material.contains_key(material)
     }
 
+    /// マテリアルのフォールバックモデルパスを取得
+    ///
+    /// # Errors
+    ///
+    /// マテリアルが見つからない場合
     pub fn resolve_fallback_model_path(&self, material: &str) -> anyhow::Result<String> {
         self.by_material
             .get(material)
@@ -58,5 +80,44 @@ impl MaterialMapping {
             .ok_or_else(|| {
                 anyhow::anyhow!("マテリアル '{material}' のフォールバックモデルが見つかりません")
             })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_material_mapping_contains() {
+        let mut mapping = MaterialMapping::default();
+        mapping.by_material.insert(
+            "diamond_sword".to_string(),
+            "minecraft:item/diamond_sword".to_string(),
+        );
+
+        assert!(mapping.contains("diamond_sword"));
+        assert!(!mapping.contains("iron_sword"));
+    }
+
+    #[test]
+    fn test_material_mapping_resolve() {
+        let mut mapping = MaterialMapping::default();
+        mapping.by_material.insert(
+            "diamond_sword".to_string(),
+            "minecraft:item/diamond_sword".to_string(),
+        );
+
+        let result = mapping.resolve_fallback_model_path("diamond_sword");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "minecraft:item/diamond_sword");
+    }
+
+    #[test]
+    fn test_material_mapping_resolve_not_found() {
+        let mapping = MaterialMapping::default();
+
+        let result = mapping.resolve_fallback_model_path("unknown");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("見つかりません"));
     }
 }

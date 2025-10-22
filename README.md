@@ -123,6 +123,43 @@ OfroPack/
 
 [LICENSE](LICENSE)を参照
 
+## 🧪 テストとドキュメント
+
+### テストの実行
+
+```bash
+# すべてのテストを実行
+cargo test
+
+# 特定のテストのみ実行
+cargo test validation
+
+# テストカバレッジを確認
+cargo test --verbose
+```
+
+### ドキュメント生成
+
+```bash
+# APIドキュメントを生成
+cargo doc --no-deps --open
+
+# または、生成のみ
+cargo doc --no-deps
+```
+
+生成されたドキュメントは `target/doc/processor/index.html` で確認できます。
+
+### コード品質チェック
+
+```bash
+# Clippyでコード品質をチェック
+cargo clippy --all-targets --all-features
+
+# リリースビルド
+cargo build --release
+```
+
 ## 🖥️ ローカル開発
 
 ### ギャラリーのローカルプレビュー
