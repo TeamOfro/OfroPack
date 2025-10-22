@@ -102,10 +102,7 @@ pub fn update_materials(materials: &[String], custom_model_data: &str) -> anyhow
                 material_path.display()
             )
         })?;
-        println!(
-            "カスタムモデルデータ '{}' をマテリアル '{}' に追加しました",
-            custom_model_data, material
-        );
+        println!("  ✓ マテリアル '{}' に追加完了", material);
     }
     Ok(())
 }

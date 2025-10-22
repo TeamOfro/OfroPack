@@ -14,9 +14,24 @@ use crate::{
     utils::json::{read_json, write_json},
 };
 
+/// 📊 ギャラリー用モデルデータ生成
+///
+/// Webギャラリー表示用のmodels.jsonを生成します。
+/// すべてのモデルとマテリアルの情報を収集し、JSON形式で出力します。
 #[derive(clap::Parser, Debug)]
+#[command(
+    about = "ギャラリー用モデルデータを生成",
+    long_about = "Webギャラリー表示用のmodels.jsonを生成します。\n\n\
+                  すべてのモデル、テクスチャ、マテリアルの情報を収集し、\n\
+                  JSON形式で出力します。Gitメタデータも含まれます。"
+)]
 pub struct Models {
-    #[clap(default_value = "models.json")]
+    /// 出力ファイルパス
+    #[arg(
+        default_value = "models.json",
+        value_name = "OUTPUT",
+        help = "出力JSONファイルのパス"
+    )]
     pub output: PathBuf,
 }
 
