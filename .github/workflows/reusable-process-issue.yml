@@ -52,7 +52,7 @@ jobs:
         id: process
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
-          PR_BRANCH: ${{ inputs.issue-type }}-${{ inputs.issue-type }}/issue-${{ inputs.issue-number }}
+          PR_BRANCH: ${{ inputs.issue-type }}/issue-${{ inputs.issue-number }}
         run: |
           # Issue本文を環境変数として読み込み
           ISSUE_BODY=$(cat << 'ISSUE_EOF'
@@ -80,7 +80,9 @@ jobs:
           fi
 
       - name: ❌ Issueにエラーコメントを投稿
-        if: failure()
+        if: failure() && steps.process.conclusion == 'failure'
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
         run: |
           ERROR_MSG="${{ steps.process.outputs.error_message }}"
           if [ -z "$ERROR_MSG" ]; then
@@ -89,7 +91,7 @@ jobs:
 
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          GITHUB_TOKEN=${{ secrets.token }} ./target/release/processor runner post-failure \
+          ./target/release/processor runner post-failure \
             --issue-number ${{ inputs.issue-number }} \
             --error-message "$ERROR_MSG" \
             --workflow-url "$WORKFLOW_URL"
