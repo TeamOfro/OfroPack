@@ -141,7 +141,7 @@ impl IssueProcessor {
                 let pr_body = format!(
                     r"## 📦 2Dカスタムモデルの追加
 
-**Issue:** #{}
+Resolves #{}
 
 ### 追加内容
 
@@ -239,7 +239,7 @@ impl IssueProcessor {
                 let pr_body = format!(
                     r"## 📦 3Dカスタムモデルの追加
 
-**Issue:** #{}
+Resolves #{}
 
 ### 追加内容
 
@@ -311,7 +311,7 @@ impl IssueProcessor {
                 let pr_body = format!(
                     r"## 📦 マテリアルの拡張
 
-**Issue:** #{}
+Resolves #{}
 
 ### 追加内容
 
