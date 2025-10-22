@@ -5,6 +5,7 @@ use anyhow::Context;
 use crate::{
     paths::Paths,
     schema::{
+        animation::AnimationInfo,
         items::{ItemCase, ItemResource},
         models::ItemModel,
     },
@@ -105,4 +106,17 @@ pub fn update_materials(materials: &[String], custom_model_data: &str) -> anyhow
         println!("  ✓ マテリアル '{}' に追加完了", material);
     }
     Ok(())
+}
+
+pub fn write_new_animation(
+    custom_model_data: &str,
+    animation_info: &AnimationInfo,
+) -> anyhow::Result<()> {
+    let animation_path = Paths::animation_path(custom_model_data);
+    write_json(&animation_path, &animation_info).with_context(|| {
+        format!(
+            "アニメーションファイルの書き込みに失敗: {}",
+            animation_path.display()
+        )
+    })
 }

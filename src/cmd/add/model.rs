@@ -136,6 +136,11 @@ impl Run for Model {
         println!("📝 モデルファイルを作成中...");
         helpers::write_new_item_model(self.parent, &custom_model_data)?;
 
+        if let Some(animation_info) = animation_info {
+            println!("📝 アニメーションファイルを作成中...");
+            helpers::write_new_animation(&custom_model_data, &animation_info)?;
+        }
+
         println!("🖼️  テクスチャをコピー中...");
         let texture_path = crate::paths::Paths::texture_path(&custom_model_data);
         std::fs::copy(&self.path_to_image, &texture_path).with_context(|| {
